@@ -1,20 +1,13 @@
-# Aurentis AI — Python dependencies
-# Uses --prefer-binary to avoid compiling from source on cloud servers
+# Aurentis AI — dependencies
+# No upper-bound pins so pip can pick wheels for any Python version
 
-# Web framework
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-jinja2==3.1.4
-python-multipart==0.0.9
-
-# HTTP client
-requests==2.32.3
-urllib3==2.2.1
-
-# Data & ML — pinned to versions with pre-built Linux wheels
-numpy==1.26.4
-scikit-learn==1.3.2
-lightgbm==4.3.0
-
-# Config
-python-dotenv==1.0.1
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+jinja2>=3.1.4
+python-multipart>=0.0.9
+requests>=2.31.0
+urllib3>=2.0.0
+numpy>=1.26.0
+scikit-learn>=1.3.2
+lightgbm>=4.3.0
+python-dotenv>=1.0.0
