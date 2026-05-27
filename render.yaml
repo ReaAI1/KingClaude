@@ -4,13 +4,15 @@ services:
     env: python
     region: oregon
     plan: starter
-    buildCommand: pip install --prefer-binary --no-build-isolation -r requirements.txt
+    buildCommand: pip install --prefer-binary -r requirements.txt
     startCommand: python -m src.main
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: WEB_HOST
         value: 0.0.0.0
+      - key: PYTHON_VERSION
+        value: "3.11.9"
       - key: DASHBOARD_USER
         sync: false
       - key: DASHBOARD_PASS
