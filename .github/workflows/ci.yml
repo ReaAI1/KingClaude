@@ -18,22 +18,20 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      - name: Install system dependencies
+        run: sudo apt-get install -y libgomp1
+
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
       - name: Install dependencies
         run: pip install --prefer-binary -r requirements.txt pytest
+
+      - name: Show installed packages
+        run: pip list
 
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
 
       - name: Import check
-        run: |
-          python -c "
-          from src.config import *
-          from src.database import Database
-          from src.indicators import ema, rsi, adx
-          from src.ml_engine import MLEngine
-          from src.signals import generate_signal, Signal
-          from src.portfolio import Portfolio
-          from src.trader import TradingEngine
-          from src.web.server import app
-          print('All imports OK')
-          "
+        run: python tests/check_imports.py
