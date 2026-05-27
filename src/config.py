@@ -79,7 +79,7 @@ SUPABASE_KEY        = _env("SUPABASE_SERVICE_KEY", "")
 
 # ── Web Dashboard ─────────────────────────────────────────────────────────────
 WEB_HOST            = _env("WEB_HOST",      "0.0.0.0")
-WEB_PORT            = int(_env_float("WEB_PORT", 8000))
+WEB_PORT            = int(os.environ.get("PORT") or _env_float("WEB_PORT", 8000))
 DASHBOARD_USER      = _env("DASHBOARD_USER",     "aurentis")
 DASHBOARD_PASS      = _env("DASHBOARD_PASS",     "changeme")
 WS_PUSH_INTERVAL    = _env_float("WS_PUSH_INTERVAL", 3.0)   # seconds

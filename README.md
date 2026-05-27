@@ -1,108 +1,137 @@
 # Aurentis AI Trading System
 
-> **Intelligent paper trading on Hyperliquid perpetuals — 24/7, from any device.**
+> **Autonomous paper trading on Hyperliquid perpetuals — 24/7, from any device.**
 
-A professional-grade algorithmic trading system built for Hyperliquid perpetuals. Combines a 10-component signal engine, LightGBM ML ensemble, adaptive weight learning, and a real-time web dashboard accessible from your phone, tablet, or any browser.
-
----
-
-## Features
-
-### Trading Engine
-- **8 perpetual pairs** — BTC, ETH, SOL, DOGE, AVAX, LINK, ARB, WIF
-- **10-component signal system** — EMA, RSI, MACD, Bollinger Bands, Stochastic, Supertrend, Volume, ADX regime, ML classifier, HTF trend filter
-- **LightGBM ML** with 15 engineered features per coin, auto-retrain every 4 hours, GradientBoosting fallback
-- **Adaptive weights** — each signal component tracks its own win/loss record and adjusts its contribution automatically
-- **Multi-timeframe analysis** — 15-minute entry signals filtered by 1-hour trend direction
-- **ADX regime detection** — trending markets boost signal confidence
-- **Partial take-profit** — closes 50% at 3%, moves stop to breakeven, lets remainder run to 5.5%
-- **Trailing stops** — locks in profits as price moves in your favor
-- **Circuit breakers** — daily 5%, weekly 10%, drawdown 20% — auto-halts trading
-- **48-hour max hold** — time-based exit prevents positions going stale
-
-### Web Dashboard
-- Beautiful dark-theme dashboard accessible from **any device on your network**
-- **Live TradingView Lightweight Charts** — BTC/USDC 1H candlestick chart
-- **Real-time WebSocket** — portfolio, positions, signals update every 3 seconds
-- **Portfolio stats panel** — value, return %, today's P&L, win rate, Sharpe ratio, profit factor
-- **Signal scanner** — live signal strength bars for all 8 coins
-- **Open positions** — P&L, stop/target, signal reasons, age
-- **Trade history** — full closed trade log with duration and reason
-- **Equity curve** — 24-hour portfolio value chart
-- **ML model status** — per-coin accuracy and training status
-- **HTTP Basic Auth** — password-protected, safe to expose on your network
-- **Mobile responsive** — works perfectly on iPhone/Android
-
-### Reliability
-- **Auto-restart** — .bat loop catches crashes, restarts automatically
-- **Windows keep-awake** — prevents system sleep via SetThreadExecutionState
-- **Task Scheduler** — auto-starts on login after reboots
-- **State persistence** — SQLite survives restarts, portfolio restored if < 24h old
-- **Watchdog thread** — detects stale prices and forces refresh
-- **Discord alerts** — rich embeds for every trade open/close, daily summary, circuit breaker
+A professional-grade algorithmic trading system built for Hyperliquid perpetuals. Combines a 10-component signal engine, LightGBM ML ensemble, adaptive weight learning, and a real-time web dashboard you can open from your phone, tablet, or any browser — anywhere.
 
 ---
 
-## Quick Start (Windows)
+## Quick Start
 
-### 1. Clone the repo
-```bash
-git clone https://github.com/rea-ai-automations/aurentis-trader.git
-cd aurentis-trader
-```
+### Option A — Run on Windows (local network access)
 
-### 2. Install dependencies
+**1. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure
+**2. Configure**
 ```bash
 copy .env.example .env
 notepad .env
 ```
-
-Edit `.env` at minimum:
+Set a secure password:
 ```env
 DASHBOARD_USER=aurentis
 DASHBOARD_PASS=your-secure-password
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...   # optional
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
-### 4. Launch
-Double-click **`START AURENTIS.bat`** — or run:
+**3. Launch (no console window)**
+Double-click **`LAUNCH DASHBOARD.vbs`**
+
+The bot starts silently in the background and your browser opens automatically to the dashboard. Access from your phone or any device on the same Wi-Fi at `http://YOUR-PC-IP:8000`.
+
+**4. Auto-start on boot**
+Double-click **`SETUP AUTO-START.bat`** once to register with Windows Task Scheduler.
+
+---
+
+### Option B — 24/7 Cloud Hosting (Render.com — recommended)
+
+No PC required. The bot runs in the cloud permanently.
+
+**1. Push your code to GitHub**
+Double-click **`PUSH TO GITHUB.bat`** (needs a GitHub Personal Access Token)
+
+**2. Deploy to Render (free trial / $7/month for 24/7)**
+1. Go to [render.com](https://render.com) → New → Web Service
+2. Connect your GitHub repo (`aurentis-trader`)
+3. Render auto-detects `render.yaml` — click **Deploy**
+4. Set environment secrets in Render dashboard:
+   - `DASHBOARD_PASS` = your password
+   - `DISCORD_WEBHOOK_URL` = your webhook
+
+Your dashboard is live at `https://aurentis-trader.onrender.com`
+
+---
+
+### Option C — DigitalOcean VPS ($6/month, most reliable)
+
 ```bash
-python -m src.main
+# On a fresh Ubuntu 22.04 droplet:
+bash scripts/setup_droplet.sh
 ```
 
-### 5. Open the dashboard
-The console will print your local IP. Open from **any device**:
+Then start:
+```bash
+systemctl start aurentis-trader
+journalctl -u aurentis-trader -f
 ```
-http://192.168.1.x:8000
-```
-Log in with your dashboard credentials.
 
-### 6. Auto-start on boot (optional)
-Double-click **`SETUP AUTO-START.bat`** to add a Task Scheduler entry.
+Dashboard: `http://your-droplet-ip:8000`
+
+---
+
+## What It Does
+
+- Connects to **Hyperliquid live prices** every 5 seconds
+- Evaluates **10 trading signals** per coin on each loop
+- Opens / closes **paper trades** with realistic slippage (2 bps) and taker fees (0.035%)
+- Manages risk with **stop-loss, take-profit, trailing stops, partial TPs**
+- **Circuit breakers** halt trading if daily/weekly losses exceed thresholds
+- Sends **Discord alerts** on every trade and daily summary
+- Saves all trades and portfolio snapshots to **SQLite database**
+- Serves a **real-time web dashboard** — accessible from any device
+
+---
+
+## Signal Engine (10 Components)
+
+Only components with an active opinion count toward the score denominator:
+
+| Indicator | Signal on | Max contribution |
+|---|---|---|
+| EMA 9/21 | Crossover or sustained trend | 2.5 pts |
+| RSI | Oversold < 38 or overbought > 62 | 2.5 pts |
+| MACD | Signal-line crossover or momentum | 2.0 pts |
+| Bollinger Bands | Price vs band position | 2.0 pts |
+| Stochastic | Extreme zones only (< 25 or > 75) | 1.5 pts |
+| Supertrend | Direction flip or sustained | 1.5 pts |
+| Volume | Spike confirmation (> 1.8× avg) | amplifier |
+| ADX | Trending market boost (> 25) | amplifier |
+| LightGBM ML | Per-coin classifier, prob > 0.55 | 2.5 pts |
+| HTF (1H) | Hourly trend filter | 2.0 pts |
+
+**Signal strength** = directional points / max possible points (0–1 scale).
+
+Trades open when strength ≥ `SIGNAL_THRESHOLD` (default 0.24).
+
+---
+
+## Risk Management
+
+- **Position sizing** — 18% of portfolio per trade, scaled by signal strength
+- **Stop-loss** — 2.5% from entry
+- **Take-profit** — 5.5% from entry
+- **Partial TP** — closes 50% at +3%, moves stop to breakeven
+- **Trailing stop** — 1.8%, locks in gains as price moves favorably
+- **48h time exit** — prevents stale positions
+- **Circuit breakers** — daily −5% halts 4h, weekly −10% halts 24h, drawdown −20% halts 7d
 
 ---
 
 ## Configuration
 
-All settings live in `.env` (copy from `.env.example`):
-
 | Variable | Default | Description |
 |---|---|---|
-| `INITIAL_CAPITAL` | `10000` | Starting paper capital ($) |
-| `TRADING_PAIRS` | `BTC,ETH,SOL,...` | Comma-separated pairs |
-| `SIGNAL_THRESHOLD` | `0.24` | Minimum signal strength (0–1) |
+| `INITIAL_CAPITAL` | `10000` | Starting capital ($) |
+| `TRADING_PAIRS` | `BTC,ETH,SOL,...` | Pairs to trade |
+| `SIGNAL_THRESHOLD` | `0.24` | Min signal to open trade |
 | `MAX_POSITIONS` | `4` | Max simultaneous positions |
-| `DASHBOARD_USER` | `aurentis` | Web dashboard username |
-| `DASHBOARD_PASS` | `changeme` | Web dashboard password |
-| `WEB_PORT` | `8000` | Dashboard port |
-| `DISCORD_WEBHOOK_URL` | _(empty)_ | Discord webhook for alerts |
-
-Advanced settings are in `src/config.py`.
+| `DASHBOARD_USER` | `aurentis` | Web login username |
+| `DASHBOARD_PASS` | `changeme` | Web login password |
+| `DISCORD_WEBHOOK_URL` | _(empty)_ | Discord alerts webhook |
 
 ---
 
@@ -111,124 +140,45 @@ Advanced settings are in `src/config.py`.
 ```
 aurentis-trader/
 ├── src/
-│   ├── config.py        — All configuration (env vars + defaults)
-│   ├── api.py           — Hyperliquid REST client (prices + candles)
-│   ├── indicators.py    — Pure-numpy: EMA, RSI, MACD, BB, ATR, ADX, Stoch, ST, VWAP
-│   ├── ml_engine.py     — LightGBM ML classifier per coin
+│   ├── config.py        — All settings (env vars + defaults)
+│   ├── api.py           — Hyperliquid REST: prices + candles
+│   ├── indicators.py    — Pure-numpy: EMA, RSI, MACD, BB, ATR, ADX, etc.
+│   ├── ml_engine.py     — LightGBM classifier per coin
 │   ├── signals.py       — 10-component signal engine + adaptive weights
-│   ├── portfolio.py     — Paper portfolio: open/close, stops, circuit breakers
-│   ├── database.py      — SQLite: trades, equity snapshots, KV state
+│   ├── portfolio.py     — Paper portfolio, stops, circuit breakers
+│   ├── database.py      — SQLite persistence
 │   ├── alerts.py        — Discord webhook alerts
-│   ├── trader.py        — TradingEngine + SharedState (6 background threads)
+│   ├── trader.py        — TradingEngine (6 background threads)
 │   ├── main.py          — Entry point
 │   └── web/
-│       ├── server.py    — FastAPI app + WebSocket broadcaster
+│       ├── server.py         — FastAPI + WebSocket broadcaster
 │       └── templates/
-│           └── index.html — Real-time dashboard (TradingView + WebSocket)
+│           └── index.html    — Real-time dashboard
 ├── tests/
-│   └── test_signals.py  — Unit tests for signals, indicators, portfolio
-├── systemd/
-│   └── aurentis-trader.service  — Linux systemd service
-├── scripts/
-│   ├── setup_droplet.sh — DigitalOcean Ubuntu 22.04 setup
-│   └── deploy.sh        — SSH deploy script
-├── .github/workflows/
-│   └── deploy.yml       — GitHub Actions CI/CD
-├── START AURENTIS.bat   — Windows double-click launcher
-├── SETUP AUTO-START.bat — Windows Task Scheduler setup
-├── requirements.txt
-├── .env.example
-└── pyproject.toml
+│   └── test_signals.py  — 21 unit tests (all passing)
+├── systemd/             — Linux systemd service
+├── scripts/             — DigitalOcean setup + deploy
+├── .github/workflows/   — CI (auto-tests) + deploy workflow
+├── render.yaml          — Render.com one-click deploy
+├── railway.json         — Railway deploy config
+├── fly.toml             — Fly.io deploy config
+├── Procfile             — Generic cloud deploy
+├── LAUNCH DASHBOARD.vbs — Windows: silent start + open browser
+├── PUSH TO GITHUB.bat   — Push repo to your GitHub account
+├── START AURENTIS.bat   — Windows console launcher (fallback)
+└── SETUP AUTO-START.bat — Windows Task Scheduler setup
 ```
-
-### Background Threads
-
-| Thread | Interval | Responsibility |
-|---|---|---|
-| `prices` | 5s | Fetch all prices, check stops |
-| `candles` | 15min full / 5min chart | OHLCV data for all pairs |
-| `trading` | 45s | Evaluate signals, open/close trades |
-| `ml` | 10min check / 4h retrain | Retrain ML models |
-| `snapshots` | 10min | Save equity snapshots to SQLite |
-| `watchdog` | 2min | Detect stale data, keep Windows awake |
 
 ---
 
-## Signal Engine
+## Reliability
 
-Each signal loop evaluates 10 components. Only components with an **active opinion** contribute to the denominator (avoids dilution from neutral indicators):
-
-| Component | Max pts | Notes |
-|---|---|---|
-| EMA trend | 2.5 cross / 1.6 trending | 9/21 EMA crossover |
-| RSI | 2.0 | Oversold <35 / overbought >65 |
-| MACD | 2.0 | Crossover + histogram direction |
-| Bollinger Bands | 1.5 | Price vs band squeeze |
-| Stochastic | 1.5 | Only active in <25 / >75 zone |
-| Supertrend | 1.5 cross / 1.1 trending | Direction + signal flip |
-| Volume | 1.0 | Spike vs 20-bar average |
-| ADX regime | ±0.3 boost | Trending amplifier |
-| ML classifier | 2.5 | Only when prob > 0.55 |
-| HTF (1H) | 2.0 | Only when HTF has directional bias |
-
-**Signal strength** = (directional points) / (max possible points)
-
-Trades open when `strength >= SIGNAL_THRESHOLD` (default 0.24).
-
----
-
-## Cloud Deployment (DigitalOcean)
-
-### 1. Create a droplet
-- Ubuntu 22.04, 2 GB RAM ($12/mo or use $6/mo 1 GB)
-- Add your SSH key
-
-### 2. Run setup script
-```bash
-ssh root@your-droplet-ip
-curl -sL https://raw.githubusercontent.com/rea-ai-automations/aurentis-trader/main/scripts/setup_droplet.sh | bash
-```
-
-### 3. Configure
-```bash
-nano /opt/aurentis-trader/.env
-```
-
-### 4. Start
-```bash
-systemctl start aurentis-trader
-journalctl -u aurentis-trader -f
-```
-
-### 5. HTTPS (optional, with domain)
-```bash
-certbot --nginx -d yourdomain.com
-```
-
-### GitHub Actions auto-deploy
-Add these secrets to your GitHub repo (`Settings > Secrets`):
-- `SERVER_HOST` — your droplet IP
-- `SERVER_USER` — `root` or `aurentis`
-- `SERVER_SSH_KEY` — your private SSH key
-- `DISCORD_WEBHOOK_URL` — optional
-
-Every push to `main` auto-deploys.
-
----
-
-## Discord Alerts
-
-Add your webhook URL to `.env`:
-```env
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/123456/abcdef
-```
-
-You'll receive:
-- **Green embed** when a long trade opens
-- **Red embed** when a short trade opens
-- **Win/loss embed** on close with P&L, duration, reason
-- **Warning embed** when circuit breaker triggers
-- **Daily summary** at midnight with day P&L, win rate
+- Every background thread has an **outer retry loop** — no thread can permanently die
+- The trading loop has **per-coin exception isolation** — one bad coin can't crash others
+- **State persists** to SQLite — portfolio survives restarts if < 24h old
+- **Watchdog thread** detects stale prices and force-refreshes
+- **Backoff** — consecutive errors increase retry delay (up to 5 min) to avoid hammering the API
+- **Windows keep-awake** — prevents PC from sleeping (SetThreadExecutionState)
 
 ---
 
@@ -238,17 +188,28 @@ You'll receive:
 python -m pytest tests/ -v
 ```
 
+21 tests covering indicators, signals, portfolio logic.
+
+---
+
+## Discord Alerts
+
+Add your webhook to `.env`:
+```env
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/123456/abcdef
+```
+
+Alerts sent for:
+- Every trade opened (with entry, stop, target, signal strength)
+- Every trade closed (P&L, duration, reason)
+- Circuit breaker triggers
+- Daily summary at midnight
+
 ---
 
 ## Risk Warning
 
-This system is for **paper trading only**. It simulates trades without real money. Past performance of simulated systems does not guarantee real trading results. Cryptocurrency trading carries significant risk. Always do your own research before trading with real capital.
-
----
-
-## License
-
-MIT License — Copyright (c) 2024 Aurentis AI
+This system is for **paper trading only**. No real money is used. Simulated results do not guarantee real trading performance. Cryptocurrency trading carries significant risk.
 
 ---
 

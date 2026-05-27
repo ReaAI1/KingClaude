@@ -1,0 +1,30 @@
+# Fly.io deployment config
+# Run: fly launch --no-deploy, then fly secrets set DASHBOARD_PASS=yourpass
+# Then: fly deploy
+app = "aurentis-trader"
+primary_region = "iad"
+
+[build]
+  # Uses auto-detected Python environment
+
+[http_service]
+  internal_port       = 8000
+  force_https         = true
+  auto_stop_machines  = false   # Never sleep — always on
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type       = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[env]
+  WEB_HOST = "0.0.0.0"
+  WEB_PORT = "8000"
+  INITIAL_CAPITAL = "10000"
