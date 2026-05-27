@@ -18,14 +18,27 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: System info
+        run: |
+          echo "=== Python ===" && python --version
+          echo "=== pip ===" && pip --version
+          echo "=== OS ===" && uname -a
+          echo "=== CPU/RAM ===" && nproc && free -h
+
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
-      - name: Install system deps
-        run: sudo apt-get install -y libgomp1
+      - name: Install numpy first
+        run: pip install --prefer-binary "numpy>=1.26"
 
-      - name: Install packages
-        run: pip install --prefer-binary fastapi uvicorn jinja2 python-multipart requests urllib3 numpy scikit-learn lightgbm python-dotenv pytest
+      - name: Install scikit-learn
+        run: pip install --prefer-binary "scikit-learn>=1.4"
+
+      - name: Install lightgbm
+        run: pip install --prefer-binary "lightgbm>=4.3"
+
+      - name: Install remaining deps
+        run: pip install --prefer-binary fastapi "uvicorn[standard]" jinja2 python-multipart requests urllib3 python-dotenv pytest
 
       - name: Show installed packages
         run: pip list
