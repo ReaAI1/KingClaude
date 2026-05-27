@@ -140,7 +140,10 @@ class TestSignals:
     def test_ml_trains_on_good_data(self):
         candles = make_candles(220)
         self.ml.train("BTC", candles)
-        assert self.ml.needs_retrain("BTC", 0) is False
+        # After training, should not need retrain for 1 hour (3 600 s)
+        # Note: passing 0 would always return True on Linux (ns-precision clock)
+        assert self.ml.needs_retrain("BTC", 3600) is False
+        assert self.ml.is_trained("BTC") is True
 
     def test_signal_uptrend_prefers_buy(self):
         """Strong uptrend should lean buy (not always, but direction should not be sell)."""
