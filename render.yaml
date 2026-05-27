@@ -1,25 +1,21 @@
-# Render.com deployment config
-# Go to render.com, connect your GitHub repo, and Render auto-deploys this.
 services:
   - type: web
-    name: aurentis-trader
+    name: kingclaude
     env: python
     region: oregon
-    plan: starter          # $7/month — runs 24/7, never sleeps
-    buildCommand: pip install -r requirements.txt
+    plan: starter
+    buildCommand: pip install --prefer-binary --no-build-isolation -r requirements.txt
     startCommand: python -m src.main
     healthCheckPath: /api/health
-    autoDeploy: true       # Deploy automatically on every git push
+    autoDeploy: true
     envVars:
-      - key:   WEB_HOST
+      - key: WEB_HOST
         value: 0.0.0.0
-      - key:   WEB_PORT
-        value: "10000"     # Render uses port 10000
-      - key:   DASHBOARD_USER
-        sync:  false       # Set this in Render dashboard (secret)
-      - key:   DASHBOARD_PASS
-        sync:  false       # Set this in Render dashboard (secret)
-      - key:   DISCORD_WEBHOOK_URL
-        sync:  false       # Optional
-      - key:   INITIAL_CAPITAL
+      - key: DASHBOARD_USER
+        sync: false
+      - key: DASHBOARD_PASS
+        sync: false
+      - key: INITIAL_CAPITAL
         value: "10000"
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
