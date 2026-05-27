@@ -1,4 +1,4 @@
-name: CI — Test & Lint
+name: CI
 
 on:
   push:
@@ -10,28 +10,28 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
-
-      - name: Install system dependencies
-        run: sudo apt-get install -y libgomp1
 
       - name: Upgrade pip
-        run: pip install --upgrade pip
+        run: python -m pip install --upgrade pip
 
-      - name: Install dependencies
-        run: pip install --prefer-binary -r requirements.txt pytest
+      - name: Install system deps
+        run: sudo apt-get install -y libgomp1
+
+      - name: Install packages
+        run: pip install --prefer-binary fastapi uvicorn jinja2 python-multipart requests urllib3 numpy scikit-learn lightgbm python-dotenv pytest
 
       - name: Show installed packages
         run: pip list
 
       - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
+        run: python -m pytest tests/ -v --tb=long
 
-      - name: Import check
+      - name: Smoke test imports
         run: python tests/check_imports.py
