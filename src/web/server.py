@@ -7,6 +7,7 @@ WebSocket pushes live updates every 3 seconds.
 import asyncio
 import json
 import logging
+import os
 import secrets
 import time
 from datetime import datetime
@@ -15,7 +16,6 @@ from typing import Optional
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 import uvicorn
@@ -24,9 +24,12 @@ from src import config as cfg
 
 log = logging.getLogger("aurentis.web")
 
+# Resolve templates path relative to THIS file — works regardless of cwd
+_TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+
 app        = FastAPI(title="Aurentis AI Trading System", docs_url=None, redoc_url=None)
 security   = HTTPBasic()
-templates  = Jinja2Templates(directory="src/web/templates")
+templates  = Jinja2Templates(directory=_TEMPLATES_DIR)
 
 # Injected by main.py
 _engine    = None
