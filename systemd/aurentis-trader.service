@@ -1,0 +1,31 @@
+[Unit]
+Description=Aurentis AI Trading System
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=aurentis
+Group=aurentis
+WorkingDirectory=/opt/aurentis-trader
+Environment="PATH=/opt/aurentis-trader/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+EnvironmentFile=/opt/aurentis-trader/.env
+ExecStart=/opt/aurentis-trader/venv/bin/python -m src.main
+Restart=always
+RestartSec=15
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=aurentis-trader
+
+# Resource limits
+MemoryMax=1G
+CPUQuota=80%
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+# Aurentis AI — Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+jinja2==3.1.4
+python-multipart==0.0.9
+
+# HTTP client (synchronous — aiohttp has SSL issues on Windows)
+requests==2.32.3
+urllib3==2.2.1
+
+# Data & ML
+numpy==1.26.4
+lightgbm==4.3.0
+scikit-learn==1.4.2
+
+# Config
+python-dotenv==1.0.1
+
+# Alerts
+# (requests already covers Discord webhooks)
+
+# Optional — Supabase cloud sync
+# supabase==2.4.6

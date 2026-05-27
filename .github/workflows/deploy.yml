@@ -1,0 +1,47 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key:      ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/aurentis-trader
+
+            echo "Pulling latest code..."
+            git pull origin main
+
+            echo "Installing dependencies..."
+            venv/bin/pip install -r requirements.txt -q
+
+            echo "Restarting service..."
+            systemctl restart aurentis-trader
+
+            echo "Deploy complete."
+            systemctl status aurentis-trader --no-pager
+
+      - name: Notify Discord
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+        run: |
+          if [ -n "$WEBHOOK" ]; then
+            COLOR=$([ "$STATUS" = "success" ] && echo 3066993 || echo 15158332)
+            curl -s -X POST "$WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d "{\"embeds\":[{\"title\":\"Deploy $STATUS\",\"description\":\"Aurentis AI deployed to server\",\"color\":$COLOR}]}"
+          fi
