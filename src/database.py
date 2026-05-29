@@ -79,7 +79,7 @@ class Database:
     def recent_trades(self, n: int = 50) -> List[dict]:
         with self._lock:
             rows = self._conn.execute(
-                "SELECT coin,side,size,entry,exit,pnl,pnl_pct,reason,duration_min "
+                "SELECT ts,coin,side,size,entry,exit,pnl,pnl_pct,reason,duration_min "
                 "FROM trades ORDER BY ts DESC LIMIT ?", (n,)
             ).fetchall()
         return [dict(r) for r in reversed(rows)]

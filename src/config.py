@@ -88,6 +88,12 @@ WS_PUSH_INTERVAL    = _env_float("WS_PUSH_INTERVAL", 3.0)   # seconds
 DISCORD_WEBHOOK     = _env("DISCORD_WEBHOOK_URL", "")
 DISCORD_ENABLED     = _env_bool("DISCORD_ENABLED", True)
 
+# ── SMS (Twilio) ──────────────────────────────────────────────────────────────
+TWILIO_SID          = _env("TWILIO_ACCOUNT_SID",  "")
+TWILIO_TOKEN        = _env("TWILIO_AUTH_TOKEN",   "")
+TWILIO_FROM         = _env("TWILIO_FROM_NUMBER",  "")
+SMS_TO              = _env("SMS_TO_NUMBER",        "")
+
 # ── Hyperliquid endpoints ─────────────────────────────────────────────────────
 HL_REST_URL         = "https://api.hyperliquid.xyz/info"
 HL_WS_URL           = "wss://api.hyperliquid.xyz/ws"

@@ -233,6 +233,7 @@ class Portfolio:
                 "pnl_pct":      round(net / pos.size_usd, 4),
                 "reason":       reason,
                 "duration_min": round(dur, 1),
+                "ts":           time.time(),
             }
             self.closed.append(rec)
             if len(self.closed) > 200:

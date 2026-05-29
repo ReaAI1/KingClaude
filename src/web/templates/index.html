@@ -291,32 +291,33 @@
       font-size: 0.82rem;
     }
 
-    /* ── Prices strip ── */
-    #prices-strip {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding: 10px 16px;
-      scrollbar-width: none;
+    /* ── Market overview grid ── */
+    #market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      padding: 14px 16px;
     }
-    #prices-strip::-webkit-scrollbar { display: none; }
-    .price-chip {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
+    .market-card {
       background: var(--bg-2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 14px;
-      flex-shrink: 0;
-      min-width: 80px;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
       cursor: default;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background 0.2s;
     }
-    .price-chip:hover { border-color: var(--accent); }
-    .price-coin { font-size: 0.72rem; font-weight: 600; color: var(--text-2); }
-    .price-val  { font-size: 0.88rem; font-weight: 700; }
+    .market-card:hover { background: var(--bg-3); }
+    .market-card.buy-card  { border-color: rgba(34,197,94,0.5);  background: rgba(34,197,94,0.05); }
+    .market-card.sell-card { border-color: rgba(239,68,68,0.5);  background: rgba(239,68,68,0.05); }
+    .mc-coin  { font-size: 0.72rem; font-weight: 700; color: var(--text-2); letter-spacing: 0.5px; }
+    .mc-price { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px; }
+    .mc-rsi   { font-size: 0.68rem; color: var(--text-3); }
+
+    /* ── Prices strip (legacy, hidden on large screens) ── */
+    #prices-strip { display: none; }
 
     /* ── ML Summary ── */
     .ml-grid {
@@ -475,11 +476,14 @@
     </div>
   </div>
 
-  <!-- ── Live Prices ── -->
+  <!-- ── Live Market Overview ── -->
   <div class="card full-width">
     <div class="card-header">
-      <span class="card-title">Live Prices</span>
+      <span class="card-title">📊 Live Market</span>
       <span class="card-badge" id="prices-ts">--</span>
+    </div>
+    <div id="market-grid">
+      <div style="color:var(--text-3);font-size:0.8rem;grid-column:1/-1">Waiting for market data...</div>
     </div>
     <div id="prices-strip"></div>
   </div>
@@ -564,29 +568,36 @@
     </div>
   </div>
 
-  <!-- ── Recent Trades ── -->
+  <!-- ── Trade Log ── -->
   <div class="card full-width">
     <div class="card-header">
-      <span class="card-title">Recent Trades</span>
-      <span class="card-badge" id="trades-count">0</span>
+      <span class="card-title">📋 Trade Log</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="card-badge" id="trades-count">0 trades</span>
+        <button id="load-all-btn" onclick="loadAllTrades()"
+          style="font-size:0.7rem;padding:3px 10px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer">
+          Load All
+        </button>
+      </div>
     </div>
     <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
+            <th>Time</th>
             <th>Coin</th>
             <th>Side</th>
             <th>Size</th>
             <th>Entry</th>
             <th>Exit</th>
-            <th>P&amp;L</th>
+            <th>P&amp;L $</th>
             <th>P&amp;L %</th>
             <th>Reason</th>
-            <th>Duration</th>
+            <th>Held</th>
           </tr>
         </thead>
         <tbody id="trades-tbody">
-          <tr class="empty-row"><td colspan="9">No closed trades yet</td></tr>
+          <tr class="empty-row"><td colspan="10">No closed trades yet — trades appear here automatically when positions close</td></tr>
         </tbody>
       </table>
     </div>
@@ -614,15 +625,16 @@ const WS_TOKEN = encodeURIComponent("{{ dashboard_user }}:{{ dashboard_pass }}")
 const WS_URL   = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?token={{ dashboard_user }}:{{ dashboard_pass }}`;
 
 // ── State ─────────────────────────────────────────────────────────────────
-let ws          = null;
-let wsAlive     = false;
-let reconnTimer = null;
-let mainChart   = null;
-let candleSeries = null;
-let equityChart  = null;
-let equitySeries = null;
+let ws             = null;
+let wsAlive        = false;
+let reconnTimer    = null;
+let mainChart      = null;
+let candleSeries   = null;
+let equityChart    = null;
+let equitySeries   = null;
 let lastEquityFetch = 0;
-let candleData  = [];
+let candleData     = [];
+let _latestSignals = {};   // cached for market grid
 
 // ── Init charts ───────────────────────────────────────────────────────────
 function initCharts() {
@@ -713,14 +725,14 @@ function setWsDot(alive) {
 
 // ── Handle WS update ──────────────────────────────────────────────────────
 function handleUpdate(d) {
+  _latestSignals = d.signals || {};   // keep for market grid
   updateStats(d.portfolio);
   updatePositions(d.positions || []);
   updateSignals(d.signals   || {});
   updateTrades(d.trades     || []);
-  updatePrices(d.prices     || {});
+  updateMarket(d.prices     || {}, _latestSignals);
   updateML(d.ml_summary     || {});
   updateStatus(d.status, d.uptime);
-  // Periodic equity fetch
   if (Date.now() - lastEquityFetch > 60000) fetchEquity();
 }
 
@@ -847,46 +859,100 @@ function compIcon(v) {
 }
 
 // ── Trades ────────────────────────────────────────────────────────────────
-function updateTrades(trades) {
-  const tb = document.getElementById('trades-tbody');
-  setText('trades-count', trades.length);
-  if (!trades.length) {
-    tb.innerHTML = '<tr class="empty-row"><td colspan="9">No closed trades yet</td></tr>';
-    return;
-  }
-  const rows = [...trades].reverse().slice(0, 25);
-  tb.innerHTML = rows.map(t => {
-    const side   = t.side === 'long' ? '<span class="side-long">L</span>' : '<span class="side-short">S</span>';
-    const pnlCls = t.pnl >= 0 ? 'green' : 'red';
-    const pnlStr = (t.pnl >= 0 ? '+' : '') + '$' + Math.abs(t.pnl).toFixed(2);
-    const pPct   = ((t.pnl_pct||0) * 100);
-    const pPctStr = (pPct >= 0 ? '+' : '') + pPct.toFixed(2) + '%';
-    const dur    = t.duration_min < 60 ? `${Math.round(t.duration_min)}m` : `${(t.duration_min/60).toFixed(1)}h`;
-    return `<tr>
-      <td><b>${t.coin}</b></td>
-      <td>${side}</td>
-      <td class="dim">${fmt$(t.size||0)}</td>
-      <td class="dim">${fmtPrice(t.entry)}</td>
-      <td class="dim">${fmtPrice(t.exit)}</td>
-      <td class="${pnlCls}">${pnlStr}</td>
-      <td class="${pnlCls}">${pPctStr}</td>
-      <td class="dim">${t.reason||'--'}</td>
-      <td class="dim">${dur}</td>
-    </tr>`;
-  }).join('');
+function fmtTs(ts) {
+  if (!ts) return '--';
+  const d = new Date(ts * 1000);
+  const mo = (d.getMonth()+1).toString().padStart(2,'0');
+  const dy = d.getDate().toString().padStart(2,'0');
+  const hh = d.getHours().toString().padStart(2,'0');
+  const mm = d.getMinutes().toString().padStart(2,'0');
+  return `${mo}/${dy} ${hh}:${mm}`;
 }
 
-// ── Prices ────────────────────────────────────────────────────────────────
-function updatePrices(prices) {
-  const strip = document.getElementById('prices-strip');
+function tradeRow(t) {
+  const side    = t.side === 'long' ? '<span class="side-long">L</span>' : '<span class="side-short">S</span>';
+  const pnlCls  = t.pnl >= 0 ? 'green' : 'red';
+  const pnlStr  = (t.pnl >= 0 ? '+' : '') + '$' + Math.abs(t.pnl).toFixed(2);
+  const pPct    = ((t.pnl_pct||0) * 100);
+  const pPctStr = (pPct >= 0 ? '+' : '') + pPct.toFixed(2) + '%';
+  const dur     = (t.duration_min||0) < 60
+                    ? `${Math.round(t.duration_min||0)}m`
+                    : `${((t.duration_min||0)/60).toFixed(1)}h`;
+  return `<tr>
+    <td class="dim" style="font-size:0.7rem;white-space:nowrap">${fmtTs(t.ts)}</td>
+    <td><b>${t.coin}</b></td>
+    <td>${side}</td>
+    <td class="dim">${fmt$(t.size||0)}</td>
+    <td class="dim">${fmtPrice(t.entry)}</td>
+    <td class="dim">${fmtPrice(t.exit)}</td>
+    <td class="${pnlCls}">${pnlStr}</td>
+    <td class="${pnlCls}">${pPctStr}</td>
+    <td class="dim">${t.reason||'--'}</td>
+    <td class="dim">${dur}</td>
+  </tr>`;
+}
+
+function updateTrades(trades) {
+  const tb = document.getElementById('trades-tbody');
+  setText('trades-count', trades.length + ' trades');
+  if (!trades.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="10">No closed trades yet</td></tr>';
+    return;
+  }
+  // trades arrive oldest-first from WS; show newest first, up to 50
+  const rows = [...trades].reverse().slice(0, 50);
+  tb.innerHTML = rows.map(tradeRow).join('');
+}
+
+async function loadAllTrades() {
+  const btn = document.getElementById('load-all-btn');
+  if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
+  try {
+    const r = await fetch('/api/trades?n=500');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const tb = document.getElementById('trades-tbody');
+    if (!data.length) {
+      tb.innerHTML = '<tr class="empty-row"><td colspan="10">No closed trades yet</td></tr>';
+    } else {
+      tb.innerHTML = [...data].reverse().map(tradeRow).join('');
+    }
+    setText('trades-count', data.length + ' trades');
+    if (btn) { btn.textContent = 'Loaded ✓'; }
+  } catch(e) {
+    console.error('loadAllTrades', e);
+    if (btn) { btn.textContent = 'Error ✗'; btn.disabled = false; }
+  }
+}
+
+// ── Market Grid ───────────────────────────────────────────────────────────
+function updateMarket(prices, signals) {
+  const grid = document.getElementById('market-grid');
   const coins = Object.keys(prices);
   if (!coins.length) return;
   setText('prices-ts', 'live');
-  strip.innerHTML = coins.map(c => {
-    const p = prices[c];
-    return `<div class="price-chip">
-      <span class="price-coin">${c}</span>
-      <span class="price-val">${fmtPrice(p)}</span>
+
+  grid.innerHTML = coins.map(coin => {
+    const price = prices[coin];
+    const sig   = signals[coin] || {};
+    const dir   = sig.direction || 'flat';
+    const rsi   = sig.rsi != null ? sig.rsi.toFixed(1) : '--';
+    const str   = sig.strength != null ? (sig.strength * 100).toFixed(0) : '--';
+
+    let cardCls = 'market-card';
+    let badge   = '';
+    if (dir === 'long') {
+      cardCls += ' buy-card';
+      badge = `<span style="font-size:0.62rem;font-weight:700;color:var(--green);float:right">▲ BUY</span>`;
+    } else if (dir === 'short') {
+      cardCls += ' sell-card';
+      badge = `<span style="font-size:0.62rem;font-weight:700;color:var(--red);float:right">▼ SELL</span>`;
+    }
+
+    return `<div class="${cardCls}">
+      <div><span class="mc-coin">${coin}</span>${badge}</div>
+      <div class="mc-price">${fmtPrice(price)}</div>
+      <div class="mc-rsi">RSI ${rsi} · str ${str}%</div>
     </div>`;
   }).join('');
 }
