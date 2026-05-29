@@ -107,6 +107,7 @@ class TradingEngine:
                 candles = self.state.candles.get(coin, [])
             if len(candles) >= cfg.ML_MIN_ROWS:
                 self.ml.train(coin, candles)
+                time.sleep(1.0)   # stagger training to avoid memory spike
 
     # ── Background threads (all wrapped in outer retry loops) ─────────────────
     def _price_thread(self):
@@ -157,6 +158,7 @@ class TradingEngine:
                             candles = self.state.candles.get(coin, [])
                         if candles:
                             self.ml.train(coin, candles)
+                            time.sleep(2.0)  # stagger to avoid memory spike
             except Exception as exc:
                 log.warning("ml_thread error (retrying in 60 s): %s", exc)
                 time.sleep(60)

@@ -38,22 +38,21 @@ class MLEngine:
         try:
             import lightgbm as lgb
             return lgb.LGBMClassifier(
-                n_estimators=300, learning_rate=0.04,
-                max_depth=5, num_leaves=20,
-                min_child_samples=15, subsample=0.8,
+                n_estimators=80, learning_rate=0.08,
+                max_depth=4, num_leaves=15,
+                min_child_samples=20, subsample=0.8,
                 colsample_bytree=0.8, random_state=42,
-                verbose=-1, n_jobs=-1,
+                verbose=-1, n_jobs=1,   # single-threaded — safe on free-tier
             )
         except ImportError:
-            from sklearn.ensemble import GradientBoostingClassifier
-            return GradientBoostingClassifier(
-                n_estimators=200, learning_rate=0.05,
-                max_depth=4, random_state=42,
+            from sklearn.ensemble import RandomForestClassifier
+            return RandomForestClassifier(
+                n_estimators=50, max_depth=4,
+                random_state=42, n_jobs=1,
             )
 
     # ── Train ─────────────────────────────────────────────────────────────────
     def train(self, coin: str, candles: list) -> None:
-        from sklearn.model_selection import cross_val_score
         from src.indicators import build_feature_matrix
 
         X, y = build_feature_matrix(candles, self.label_bars, self.label_thresh)
@@ -65,15 +64,19 @@ class MLEngine:
         Xb   = X[mask]
         yb   = np.where(y[mask] == 1, 1, 0)
 
-        if len(np.unique(yb)) < 2 or len(Xb) < 50:
+        if len(np.unique(yb)) < 2 or len(Xb) < 40:
             log.debug("ML skip %s — insufficient class balance", coin)
             return
 
+        # Simple holdout instead of cross-val — much less memory
+        split  = int(len(Xb) * 0.80)
+        X_tr, X_val = Xb[:split], Xb[split:]
+        y_tr, y_val = yb[:split], yb[split:]
+
         clf = self._make_clf()
         try:
-            scores = cross_val_score(clf, Xb, yb, cv=3, scoring="accuracy", n_jobs=-1)
-            acc    = float(np.mean(scores))
-            clf.fit(Xb, yb)
+            clf.fit(X_tr, y_tr)
+            acc = float((clf.predict(X_val) == y_val).mean()) if len(X_val) else 0.5
             with self._lock:
                 self._models[coin]      = clf
                 self._accuracy[coin]    = acc

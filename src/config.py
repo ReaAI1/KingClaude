@@ -29,8 +29,8 @@ def _env_list(key: str, default: str) -> List[str]:
 
 # ── Trading ───────────────────────────────────────────────────────────────────
 INITIAL_CAPITAL     = _env_float("INITIAL_CAPITAL",     10_000.0)
-TRADING_PAIRS       = _env_list("TRADING_PAIRS",        "BTC,ETH,SOL,DOGE,AVAX,LINK,ARB,WIF")
-MAX_POSITIONS       = int(_env_float("MAX_POSITIONS",   4))
+TRADING_PAIRS       = _env_list("TRADING_PAIRS",        "BTC,ETH,SOL,DOGE,AVAX")
+MAX_POSITIONS       = int(_env_float("MAX_POSITIONS",   3))
 POSITION_SIZE_PCT   = _env_float("POSITION_SIZE_PCT",   0.18)   # 18% per trade
 SIGNAL_THRESHOLD    = _env_float("SIGNAL_THRESHOLD",    0.15)
 LOOP_SECS           = int(_env_float("LOOP_SECS",       30))
@@ -53,9 +53,9 @@ PRIMARY_TF          = _env("PRIMARY_TF",    "15m")
 HTF_TF              = _env("HTF_TF",        "1h")
 CHART_TF            = _env("CHART_TF",      "1h")
 CHART_COIN          = _env("CHART_COIN",    "BTC")
-CANDLE_LOOKBACK     = int(_env_float("CANDLE_LOOKBACK", 220))
-HTF_LOOKBACK        = int(_env_float("HTF_LOOKBACK",    80))
-CHART_BARS          = int(_env_float("CHART_BARS",      100))
+CANDLE_LOOKBACK     = int(_env_float("CANDLE_LOOKBACK", 150))
+HTF_LOOKBACK        = int(_env_float("HTF_LOOKBACK",    60))
+CHART_BARS          = int(_env_float("CHART_BARS",      80))
 
 # ── ML ────────────────────────────────────────────────────────────────────────
 ML_RETRAIN_HOURS    = _env_float("ML_RETRAIN_HOURS",    4.0)
