@@ -237,6 +237,7 @@ class TradingEngine:
                     continue
 
                 # Evaluate signals for each coin
+                _loop_sigs: List[str] = []   # for scan summary log
                 for coin in cfg.TRADING_PAIRS:
                     if self._stop_evt.is_set():
                         break
@@ -246,12 +247,16 @@ class TradingEngine:
                             htf     = getattr(self.state, "htf_candles", {}).get(coin, [])
 
                         if len(candles) < 50:
+                            _loop_sigs.append(f"{coin}:no-data")
                             continue
 
                         sig = generate_signal(
                             coin, candles, htf, self.ml, cfg.SIGNAL_THRESHOLD
                         )
                         self.state.update_signal(coin, sig)
+                        _loop_sigs.append(
+                            f"{coin}:{sig.direction[0].upper()}{sig.strength:.2f}"
+                        )
 
                         # Signal-flip exit
                         if coin in self.portfolio.positions:
@@ -293,6 +298,11 @@ class TradingEngine:
                                 )
                     except Exception as coin_exc:
                         log.warning("trading_loop coin %s error: %s", coin, coin_exc)
+
+                # Log scan summary every 10 loops
+                if self.state.loop_count % 10 == 0:
+                    log.info("Loop #%d signals: %s",
+                             self.state.loop_count, "  ".join(_loop_sigs))
 
                 # Update scan status
                 with self.state._lock:

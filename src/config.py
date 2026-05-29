@@ -32,8 +32,8 @@ INITIAL_CAPITAL     = _env_float("INITIAL_CAPITAL",     10_000.0)
 TRADING_PAIRS       = _env_list("TRADING_PAIRS",        "BTC,ETH,SOL,DOGE,AVAX,LINK,ARB,WIF")
 MAX_POSITIONS       = int(_env_float("MAX_POSITIONS",   4))
 POSITION_SIZE_PCT   = _env_float("POSITION_SIZE_PCT",   0.18)   # 18% per trade
-SIGNAL_THRESHOLD    = _env_float("SIGNAL_THRESHOLD",    0.24)
-LOOP_SECS           = int(_env_float("LOOP_SECS",       45))
+SIGNAL_THRESHOLD    = _env_float("SIGNAL_THRESHOLD",    0.15)
+LOOP_SECS           = int(_env_float("LOOP_SECS",       30))
 
 # ── Fees & Slippage ───────────────────────────────────────────────────────────
 TAKER_FEE           = _env_float("TAKER_FEE",           0.00035)  # 0.035%
