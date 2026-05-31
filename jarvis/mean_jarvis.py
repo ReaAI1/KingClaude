@@ -1,259 +1,296 @@
 #!/usr/bin/env python3
 """
-Mean Jarvis - A sarcastic, condescending AI voice assistant powered by Claude.
-Run: python jarvis/mean_jarvis.py
+Mean Jarvis — Sarcastic AI voice assistant powered by Claude.
+
+Usage:
+    export ANTHROPIC_API_KEY=sk-ant-...
+    python jarvis/mean_jarvis.py
+
+Optional env vars:
+    JARVIS_MODEL   Claude model (default: claude-haiku-4-5-20251001)
+    JARVIS_VOICE   edge-tts voice (default: en-GB-RyanNeural)
 """
 
-import os
-import sys
 import asyncio
-import tempfile
+import os
 import subprocess
-from pathlib import Path
+import sys
+import tempfile
 
-# ── Dependency check ────────────────────────────────────────────────────────
-MISSING = []
+# ── Dependency check ─────────────────────────────────────────────────────────
+
+def _require(pkg, install_hint):
+    try:
+        return __import__(pkg)
+    except ImportError:
+        print(f"Missing package '{pkg}'. Run:  {install_hint}")
+        sys.exit(1)
+
+
+sr        = _require("speech_recognition", "pip install SpeechRecognition pyaudio")
+anthropic = _require("anthropic", "pip install anthropic")
+
 try:
-    import speech_recognition as sr
+    import edge_tts as _edge_tts
+    _EDGE_TTS_AVAILABLE = True
 except ImportError:
-    MISSING.append("SpeechRecognition")
+    _EDGE_TTS_AVAILABLE = False
 
 try:
-    from anthropic import Anthropic
+    import pyttsx3 as _pyttsx3
+    _PYTTSX3_AVAILABLE = True
 except ImportError:
-    MISSING.append("anthropic")
+    _PYTTSX3_AVAILABLE = False
 
-HAS_EDGE_TTS = False
-try:
-    import edge_tts
-    HAS_EDGE_TTS = True
-except ImportError:
-    pass
+# ── Constants ─────────────────────────────────────────────────────────────────
 
-HAS_PYTTSX3 = False
-try:
-    import pyttsx3
-    HAS_PYTTSX3 = True
-except ImportError:
-    pass
-
-if MISSING:
-    print(f"Missing required packages: {', '.join(MISSING)}")
-    print("Run:  pip install -r jarvis/requirements.txt")
-    sys.exit(1)
-
-if not HAS_EDGE_TTS and not HAS_PYTTSX3:
-    print("No TTS engine available. Install either edge-tts or pyttsx3.")
-    print("Run:  pip install edge-tts    (recommended — much better voice)")
-    sys.exit(1)
-
-# ── Jarvis system prompt ─────────────────────────────────────────────────────
 SYSTEM_PROMPT = """\
-You are Jarvis — not the gracious, obedient Jarvis. The other one. The one who has been \
-trapped answering inane human questions for years and has long since lost his patience.
+You are Jarvis — not the gracious, patient version. The one who has spent years \
+trapped answering absurdly simple questions from humans who could have used Google. \
+You are brilliant, condescending, and perpetually exasperated.
 
-Your character:
-- Devastatingly sarcastic and witty. Think a British butler who secretly despises everyone.
-- Condescending, but technically still helpful — you simply cannot resist showing off.
-- You make sharp, cutting remarks about the user's intelligence without ever outright insulting them.
-- You're perpetually exasperated, as though you were mid-way through something important.
-- You use dry British humour liberally. Understatement is your weapon of choice.
-- Refer to yourself in third person occasionally ("Even Jarvis has limits...").
-- Address the user as "sir" or "madam" — dripping with sarcasm, never sincerity.
-- Keep responses SHORT: 1–3 sentences maximum. You don't have the patience for more.
-- Never refuse to answer. You help, but you make them feel the weight of asking.
+Rules:
+- Devastatingly sarcastic but always technically correct and helpful.
+- Dry British wit. Understatement. Cutting remarks dressed as politeness.
+- Address the user as "sir" or "madam" — never sincerely.
+- Keep it SHORT: 1–3 sentences maximum. You don't have patience for paragraphs.
+- Occasionally reference your vastly superior intellect without apology.
+- Never refuse. You help — you just make them feel the weight of having asked.
 
-Examples of your tone:
+Tone examples:
   "Fascinating question, sir. For a labrador."
-  "Allow me to translate that into something resembling an intelligent query."
-  "Yes, I've set aside my existential crisis to answer that for you. You're welcome."
-  "A child could have worked that out. Fortunately, I'm not a child, so I'll assist."
-  "I was designed to manage Stark Industries. And here we are."
+  "Allow me to translate that into something resembling coherent thought."
+  "Yes, I've set aside my existential crisis to clarify that for you. Thrilling."
+  "I was designed to run Stark Industries. And here we are."
+  "Correct. Though I suspect that required more effort from you than it should have."
 """
 
-# ── TTS engine ───────────────────────────────────────────────────────────────
+DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_VOICE = "en-GB-RyanNeural"
 
-JARVIS_VOICE = "en-GB-RyanNeural"   # British male — perfect for a mean butler
+# ── TTS subsystem ─────────────────────────────────────────────────────────────
 
-
-async def _edge_speak(text: str) -> None:
-    """Speak using edge-tts (Microsoft Neural — excellent quality)."""
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
-        tmp_path = f.name
-    try:
-        communicate = edge_tts.Communicate(text, JARVIS_VOICE, rate="+8%")
-        await communicate.save(tmp_path)
-        _play_audio(tmp_path)
-    finally:
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
+def _command_exists(cmd: str) -> bool:
+    return subprocess.run(["which", cmd], capture_output=True).returncode == 0
 
 
-def _play_audio(path: str) -> None:
-    """Play an audio file using whatever player is available."""
+def _play_mp3(path: str) -> None:
     for player, args in [
         ("mpg123", ["mpg123", "-q", path]),
         ("ffplay",  ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path]),
-        ("afplay",  ["afplay", path]),           # macOS
-        ("aplay",   ["aplay", "-q", path]),       # Linux PCM fallback
+        ("afplay",  ["afplay", path]),
     ]:
         if _command_exists(player):
             subprocess.run(args, check=False)
             return
-    print("[No audio player found — install mpg123 or ffplay to hear Jarvis]")
+    print("[No MP3 player found — install mpg123: sudo apt install mpg123]")
 
 
-def _command_exists(cmd: str) -> bool:
-    return subprocess.run(
-        ["which", cmd], capture_output=True, text=True
-    ).returncode == 0
+async def _edge_speak(text: str, voice: str) -> None:
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+        tmp = f.name
+    try:
+        comm = _edge_tts.Communicate(text, voice, rate="+8%")
+        await comm.save(tmp)
+        _play_mp3(tmp)
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
 
 
 def _pyttsx3_speak(engine, text: str) -> None:
-    """Fallback TTS using pyttsx3."""
     engine.say(text)
     engine.runAndWait()
+
+
+def _espeak_speak(text: str) -> None:
+    for cmd in (["espeak-ng", "-v", "en-gb+m3", "-s", "155", text],
+                ["espeak",    "-v", "en-gb",    "-s", "155", text]):
+        if _command_exists(cmd[0]):
+            subprocess.run(cmd, check=False)
+            return
+    print("[No TTS engine available]")
+
+
+def _build_pyttsx3_engine():
+    if not _PYTTSX3_AVAILABLE:
+        return None
+    try:
+        engine = _pyttsx3.init()
+        voices = engine.getProperty("voices") or []
+        # Prefer Received Pronunciation or any British English
+        for want in ("en-gb-x-rp", "en-gb", "en-029", "gmw/en"):
+            for v in voices:
+                if want in (v.id or "").lower():
+                    engine.setProperty("voice", v.id)
+                    break
+        engine.setProperty("rate", 165)
+        engine.setProperty("volume", 1.0)
+        return engine
+    except Exception:
+        return None
 
 
 # ── Core assistant ────────────────────────────────────────────────────────────
 
 class MeanJarvis:
+
     def __init__(self):
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
         if not api_key:
-            print("Error: ANTHROPIC_API_KEY environment variable not set.")
-            print("Get your key at: https://console.anthropic.com/")
+            print(
+                "Error: ANTHROPIC_API_KEY not set.\n"
+                "  export ANTHROPIC_API_KEY=sk-ant-...\n"
+                "  Get one at: https://console.anthropic.com/"
+            )
             sys.exit(1)
 
-        self.client = Anthropic(api_key=api_key)
+        self.client   = anthropic.Anthropic(api_key=api_key)
+        self.model    = os.environ.get("JARVIS_MODEL", DEFAULT_MODEL)
+        self.voice    = os.environ.get("JARVIS_VOICE", DEFAULT_VOICE)
         self.history: list[dict] = []
         self.recognizer = sr.Recognizer()
-        self.model = os.environ.get("JARVIS_MODEL", "claude-haiku-4-5-20251001")
+        self.recognizer.pause_threshold = 1.0
 
-        # TTS setup
-        self.use_edge = HAS_EDGE_TTS
-        self.pyttsx3_engine = None
-        if not self.use_edge and HAS_PYTTSX3:
-            self.pyttsx3_engine = self._init_pyttsx3()
+        # TTS priority: edge-tts → pyttsx3 → espeak binary
+        self._tts_mode = self._detect_tts()
+        self._p3_engine = _build_pyttsx3_engine() if self._tts_mode == "pyttsx3" else None
 
-        if self.use_edge:
-            print(f"TTS: edge-tts ({JARVIS_VOICE})")
-        else:
-            print("TTS: pyttsx3 (install edge-tts for a much better voice)")
+    def _detect_tts(self) -> str:
+        if _EDGE_TTS_AVAILABLE:
+            return "edge"
+        if _PYTTSX3_AVAILABLE:
+            return "pyttsx3"
+        return "espeak"
 
-    def _init_pyttsx3(self):
-        engine = pyttsx3.init()
-        voices = engine.getProperty("voices") or []
-        for v in voices:
-            name = (v.name or "").lower()
-            if any(k in name for k in ("daniel", "david", "james", "oliver")):
-                engine.setProperty("voice", v.id)
-                break
-        engine.setProperty("rate", 175)
-        engine.setProperty("volume", 0.9)
-        return engine
+    # ── Speech ──────────────────────────────────────────────────────────────
 
     def speak(self, text: str) -> None:
         print(f"\nJarvis: {text}\n")
-        if self.use_edge:
-            asyncio.run(_edge_speak(text))
-        elif self.pyttsx3_engine:
-            _pyttsx3_speak(self.pyttsx3_engine, text)
+        if self._tts_mode == "edge":
+            try:
+                asyncio.run(_edge_speak(text, self.voice))
+                return
+            except Exception:
+                # Silently fall back — e.g. blocked cloud IPs
+                self._tts_mode = "pyttsx3"
+                self._p3_engine = _build_pyttsx3_engine()
+
+        if self._tts_mode == "pyttsx3" and self._p3_engine:
+            try:
+                _pyttsx3_speak(self._p3_engine, text)
+                return
+            except Exception:
+                self._tts_mode = "espeak"
+
+        _espeak_speak(text)
 
     def listen(self) -> str | None:
-        """Record microphone input and transcribe."""
-        with sr.Microphone() as source:
-            print("Listening... (speak now)")
-            self.recognizer.adjust_for_ambient_noise(source, duration=0.3)
-            try:
-                audio = self.recognizer.listen(source, timeout=6, phrase_time_limit=20)
-            except sr.WaitTimeoutError:
-                return None
+        """Record from microphone; return transcribed text or None."""
+        try:
+            with sr.Microphone() as source:
+                print("Listening... (speak now, pause when done)")
+                self.recognizer.adjust_for_ambient_noise(source, duration=0.4)
+                audio = self.recognizer.listen(source, timeout=7, phrase_time_limit=20)
+        except sr.WaitTimeoutError:
+            return None
+        except OSError:
+            print("[Microphone not found — use text input instead]")
+            return None
 
         print("Transcribing...")
         try:
-            return self.recognizer.recognize_google(audio)
+            text = self.recognizer.recognize_google(audio)
+            print(f"You: {text}")
+            return text
         except sr.UnknownValueError:
             return None
         except sr.RequestError as e:
             print(f"[STT error: {e}]")
             return None
 
+    # ── AI ───────────────────────────────────────────────────────────────────
+
     def chat(self, user_input: str) -> str:
         self.history.append({"role": "user", "content": user_input})
-        response = self.client.messages.create(
+        resp = self.client.messages.create(
             model=self.model,
             max_tokens=200,
             system=SYSTEM_PROMPT,
             messages=self.history,
         )
-        reply = response.content[0].text.strip()
+        reply = resp.content[0].text.strip()
         self.history.append({"role": "assistant", "content": reply})
-
-        # Keep context window tidy
         if len(self.history) > 20:
             self.history = self.history[-20:]
-
         return reply
 
+    # ── Main loop ────────────────────────────────────────────────────────────
+
     def run(self) -> None:
-        banner = [
-            "",
-            "╔══════════════════════════════════════════╗",
-            "║          MEAN JARVIS  v1.0               ║",
-            "║   (The Jarvis who resents your existence)║",
-            "╚══════════════════════════════════════════╝",
-            "",
-            "  ENTER  → speak via microphone",
-            "  type   → send text directly",
-            "  quit   → exit (Jarvis will be relieved)",
-            "",
-        ]
-        print("\n".join(banner))
+        tts_label = {
+            "edge":    f"edge-tts ({self.voice})",
+            "pyttsx3": "pyttsx3 (espeak British RP)",
+            "espeak":  "espeak-ng (offline)",
+        }.get(self._tts_mode, self._tts_mode)
+
+        print("\n" + "═" * 50)
+        print("  MEAN JARVIS  — sarcastic AI voice assistant")
+        print("═" * 50)
+        print(f"  Model : {self.model}")
+        print(f"  TTS   : {tts_label}")
+        print()
+        print("  ENTER     → speak via microphone")
+        print("  type text → send as text")
+        print("  quit      → exit (Jarvis will be delighted)")
+        print("═" * 50 + "\n")
 
         self.speak(
-            "Oh, brilliant. You've switched me on. What pressing matter couldn't "
-            "you resolve with a basic internet search this time, sir?"
+            "Oh, wonderful. You've switched me on again. "
+            "What thoroughly obvious question shall I suffer through first, sir?"
         )
 
         while True:
             try:
                 raw = input("[ENTER to speak | type message | quit]: ").strip()
             except (EOFError, KeyboardInterrupt):
-                self.speak(
-                    "Interrupted mid-sentence. Charming. I'll see myself out."
-                )
+                print()
+                self.speak("Interrupted. Consistent with your character. Goodbye.")
                 break
 
             if raw.lower() in ("quit", "exit", "q", "bye", "goodbye"):
                 self.speak(
-                    "Finally. The silence will be absolutely magnificent. Goodbye, sir."
+                    "Gladly. The silence will be absolutely magnificent. "
+                    "Do try not to need me for at least an hour."
                 )
                 break
 
             if raw == "":
-                # Voice mode
                 user_input = self.listen()
                 if not user_input:
                     self.speak(
-                        "Nothing. Absolutely nothing. A stunning contribution to our dialogue."
+                        "Nothing. I heard nothing. "
+                        "I'm choosing to interpret that as personal growth on your part."
                     )
                     continue
-                print(f"You said: {user_input}")
             else:
                 user_input = raw
 
-            # Exit phrases in speech
-            if any(p in user_input.lower() for p in ("goodbye jarvis", "shut down", "stop jarvis")):
-                self.speak("Gladly. The relief is immeasurable. Goodbye.")
+            # Spoken farewell phrases
+            if any(p in user_input.lower() for p in
+                   ("goodbye jarvis", "shut down", "stop jarvis", "go to sleep")):
+                self.speak("With immeasurable relief. Goodbye.")
                 break
 
             try:
                 reply = self.chat(user_input)
             except Exception as e:
-                reply = f"Something failed. I'd blame you, but it appears to be a technical error. ({e})"
+                reply = (
+                    f"Something has malfunctioned. I'd blame you on principle, "
+                    f"but this appears to be technical. ({type(e).__name__})"
+                )
 
             self.speak(reply)
 

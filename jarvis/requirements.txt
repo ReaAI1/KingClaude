@@ -1,6 +1,7 @@
 # Mean Jarvis dependencies
 anthropic>=0.40
 SpeechRecognition>=3.10
-pyaudio>=0.2.14       # microphone input for SpeechRecognition
-edge-tts>=6.1         # recommended TTS — Microsoft Neural voices (sounds great)
-# pyttsx3>=2.90       # offline fallback TTS (robotic but works without internet)
+pyaudio>=0.2.14       # microphone input (needs: sudo apt install portaudio19-dev)
+edge-tts>=6.1         # Microsoft Neural TTS — best voice quality (requires internet)
+pyttsx3>=2.90         # offline TTS fallback (needs espeak-ng on Linux)
+gtts>=2.5             # Google TTS (alternative, requires internet)
