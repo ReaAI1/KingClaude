@@ -1,0 +1,6 @@
+# Mean Jarvis dependencies
+anthropic>=0.40
+SpeechRecognition>=3.10
+pyaudio>=0.2.14       # microphone input for SpeechRecognition
+edge-tts>=6.1         # recommended TTS — Microsoft Neural voices (sounds great)
+# pyttsx3>=2.90       # offline fallback TTS (robotic but works without internet)
