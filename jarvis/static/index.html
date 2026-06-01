@@ -310,6 +310,43 @@
       text-shadow: 0 0 8px var(--cyan);
     }
 
+    /* ── Tool activity indicator ────────────────────────────── */
+    #tool-indicator {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background: rgba(0,8,20,0.9);
+      border: 1px solid rgba(0,180,216,0.3);
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--cyan);
+      opacity: 0;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #tool-indicator.visible { opacity: 1; }
+    #tool-indicator::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: blink-tool 0.8s ease-in-out infinite;
+    }
+    @keyframes blink-tool {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* ── System transcript entries ──────────────────────────── */
+    .transcript-entry.system .role { color: rgba(0,180,216,0.3); font-size: 0.55rem; }
+    .transcript-entry.system .msg  { color: rgba(144,224,239,0.3); font-size: 0.75rem; font-style: italic; }
+
     /* ── Boot overlay ───────────────────────────────────────── */
     #boot-overlay {
       position: fixed; inset: 0; z-index: 999;
@@ -366,6 +403,8 @@
       <div id="status-dot"></div>
     </div>
   </header>
+
+  <div id="tool-indicator"></div>
 
   <main>
     <div class="orb-wrap idle" id="orb-wrap" title="Click or press Space to speak">
@@ -534,6 +573,20 @@ function handleMessage(msg) {
       browserSpeak(msg.text);
       break;
 
+    case 'tool_start': {
+      const el = document.getElementById('tool-indicator');
+      el.textContent = msg.label || msg.tool;
+      el.classList.add('visible');
+      // Also show in transcript as a dim system message
+      const entry = addTranscriptEntry('system', msg.label || msg.tool);
+      break;
+    }
+
+    case 'tool_done': {
+      document.getElementById('tool-indicator').classList.remove('visible');
+      break;
+    }
+
     case 'error':
       addTranscriptEntry('jarvis', '[Error: ' + msg.text + ']');
       setState(STATES.IDLE);
@@ -550,7 +603,7 @@ function addTranscriptEntry(role, text, streaming = false) {
 
   const roleEl = document.createElement('div');
   roleEl.className = 'role';
-  roleEl.textContent = role === 'user' ? 'YOU' : 'J.A.R.V.I.S.';
+  roleEl.textContent = role === 'user' ? 'YOU' : role === 'system' ? '⚙ SYSTEM' : 'J.A.R.V.I.S.';
 
   const msgEl = document.createElement('div');
   msgEl.className = 'msg' + (streaming ? ' streaming' : '');
