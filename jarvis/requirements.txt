@@ -1,0 +1,8 @@
+# Mean Jarvis dependencies
+fastapi>=0.111
+uvicorn[standard]>=0.29
+anthropic>=0.40
+SpeechRecognition>=3.10
+pyaudio>=0.2.14       # microphone input (needs: sudo apt install portaudio19-dev)
+edge-tts>=6.1         # Microsoft Neural TTS — best voice quality (requires internet)
+pyttsx3>=2.90         # offline TTS fallback (needs espeak-ng on Linux)
