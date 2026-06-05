@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRONOS — Aurentis Trading System</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:#030508;
+    font-family:'Courier New',Courier,monospace;color:#c8d8f0}
+
+  /* ── Header ── */
+  #hdr{
+    position:fixed;top:0;left:0;right:0;z-index:20;
+    height:44px;
+    background:rgba(3,5,8,.97);
+    border-bottom:1px solid #0c1522;
+    display:flex;align-items:center;gap:0;
+  }
+  .tab{
+    height:100%;display:flex;align-items:center;gap:7px;padding:0 16px;
+    font-size:.68rem;color:#253550;border-right:1px solid #0c1522;
+    cursor:pointer;letter-spacing:.8px;text-transform:uppercase;
+    transition:color .2s;user-select:none;
+  }
+  .tab.on{color:#c8d8f0}
+  .tab .n{color:#7c5cf5;font-weight:900;font-size:.72rem}
+  .stats{margin-left:auto;display:flex;align-items:center;gap:28px;padding-right:20px}
+  .sb{text-align:right;line-height:1.25}
+  .sl{font-size:.52rem;color:#1a2f4a;letter-spacing:1.8px;text-transform:uppercase}
+  .sv{font-size:.88rem;font-weight:800;letter-spacing:-.5px;color:#c8d8f0}
+  .sv.g{color:#22c55e}.sv.r{color:#ef4444}
+
+  /* ── Canvas ── */
+  #c{
+    position:fixed;top:44px;left:0;
+    width:100vw;height:calc(100vh - 44px);
+    display:block;
+  }
+
+  /* ── Tooltip ── */
+  #tt{
+    position:fixed;
+    background:rgba(4,7,13,.97);
+    border:1px solid #0c1a2a;
+    border-radius:7px;
+    padding:10px 14px;
+    font-size:.72rem;
+    pointer-events:none;z-index:30;
+    opacity:0;transition:opacity .15s;
+    min-width:180px;max-width:240px;
+    backdrop-filter:blur(4px);
+  }
+  #tt.show{opacity:1}
+  #tt-name{font-weight:800;font-size:.82rem;margin-bottom:5px}
+  #tt-health{font-size:.68rem;margin-bottom:4px}
+  #tt-event{color:#3a5070;font-size:.67rem;line-height:1.5}
+
+  /* ── Bottom event log ── */
+  #elog{
+    position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:10px;z-index:10;
+    font-size:.62rem;color:#253550;letter-spacing:.5px;
+    pointer-events:none;
+  }
+  .eitem{padding:3px 10px;border:1px solid #0c1522;border-radius:12px;
+    background:rgba(4,7,12,.85);white-space:nowrap}
+  .eitem span{color:#7c5cf5}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="hdr">
+  <div class="tab on"><span class="n">[1]</span> EVENTS</div>
+  <div class="tab"><span class="n">[2]</span> BRAIN</div>
+  <div class="tab"><span class="n">[3]</span> DECK</div>
+  <div class="stats">
+    <div class="sb"><div class="sl">VALUE</div><div class="sv g" id="sv">$10,000</div></div>
+    <div class="sb"><div class="sl">POSITIONS</div><div class="sv" id="sp">0</div></div>
+    <div class="sb"><div class="sl">SIGNALS</div><div class="sv" id="ss">—</div></div>
+    <div class="sb"><div class="sl">UPTIME</div><div class="sv" id="su">00:00:00</div></div>
+  </div>
+</div>
+
+<!-- Main canvas -->
+<canvas id="c"></canvas>
+
+<!-- Tooltip -->
+<div id="tt">
+  <div id="tt-name"></div>
+  <div id="tt-health"></div>
+  <div id="tt-event"></div>
+</div>
+
+<!-- Bottom event log -->
+<div id="elog">
+  <div class="eitem"><span>DATA</span> prices.update × 5s</div>
+  <div class="eitem" id="el-sig"><span>SCANNER</span> BTC: BUY 0.71</div>
+  <div class="eitem" id="el-trade"><span>EXECUTION</span> waiting…</div>
+  <div class="eitem" id="el-risk"><span>RISK</span> circuit ok</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// KRONOS Node Graph — standalone visualization
+// ─────────────────────────────────────────────────────────────────────────────
+
+const C   = document.getElementById('c');
+const ctx = C.getContext('2d');
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+function resize(){
+  C.width  = window.innerWidth;
+  C.height = window.innerHeight - 44;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const GX = () => C.width  * .5;
+const GY = () => C.height * .5;
+
+// ── Module definitions ────────────────────────────────────────────────────────
+const MODS = [
+  {
+    id:'DATA',      col:'#00e5ff', size:36,
+    health:'ok',
+    events:['prices.update × 5s','BTC $104,240 live','candles loaded 5 coins']
+  },
+  {
+    id:'BRAIN',     col:'#ff8c00', size:34,
+    health:'ok',
+    events:['BTC acc=72.1%','ETH acc=68.4%','retrain in 3.1h']
+  },
+  {
+    id:'SCANNER',   col:'#f5d020', size:34,
+    health:'ok',
+    events:['BTC:B0.71 ETH:F0.12','SOL:S0.43 DOGE:B0.31','loop #1,402']
+  },
+  {
+    id:'RISK',      col:'#ff2244', size:34,
+    health:'ok',
+    events:['signal APPROVED','positions 1/3','circuit ok']
+  },
+  {
+    id:'EXECUTION', col:'#00ff88', size:38,
+    health:'ok',
+    events:['LONG BTC $1,800','entry 104,200 SL 101k','1 open $10,182']
+  },
+  {
+    id:'PORTFOLIO', col:'#9944ff', size:34,
+    health:'ok',
+    events:['1 open  value=$10,182','realized +$182','cash $8,200']
+  },
+  {
+    id:'WATCHDOG',  col:'#4488ff', size:30,
+    health:'ok',
+    events:['all 7 modules ok','snapshot saved','BTC prices live']
+  },
+  {
+    id:'ALERTS',    col:'#ff44cc', size:28,
+    health:'ok',
+    events:['Discord: OPEN BTC','alert queue empty','connected']
+  },
+];
+
+const N = MODS.length;
+MODS.forEach((m, i) => {
+  m.angle    = (i / N) * 2 * Math.PI - Math.PI / 2;
+  m.phase    = Math.random() * Math.PI * 2;
+  m.evtIdx   = 0;
+});
+
+function RING(){ return Math.min(C.width * .34, C.height * .38, 230); }
+
+function modXY(m){
+  const r = RING();
+  return { x: GX() + r * Math.cos(m.angle), y: GY() + r * Math.sin(m.angle) };
+}
+
+// ── Pulse dots ────────────────────────────────────────────────────────────────
+// Each moves from center→module continuously
+const PULSE_COUNT = 4;
+const pulses = [];
+MODS.forEach((m, mi) => {
+  for(let j = 0; j < PULSE_COUNT; j++){
+    pulses.push({
+      mi,
+      t:   j / PULSE_COUNT,         // 0 = at center, 1 = at module
+      spd: .0006 + Math.random() * .0004,
+      sz:  1.8 + Math.random() * 1.5,
+      a:   .5 + Math.random() * .5,
+    });
+  }
+});
+
+// ── Hex path helper ───────────────────────────────────────────────────────────
+function hex(cx, cy, r, flat=false){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a = flat ? (Math.PI/3)*i : (Math.PI/3)*i + Math.PI/6;
+    const px = cx + r * Math.cos(a);
+    const py = cy + r * Math.sin(a);
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
+
+// ── rgb helper ────────────────────────────────────────────────────────────────
+function rgb(hex6){
+  return [
+    parseInt(hex6.slice(1,3),16),
+    parseInt(hex6.slice(3,5),16),
+    parseInt(hex6.slice(5,7),16),
+  ].join(',');
+}
+
+// ── Draw hex background grid ──────────────────────────────────────────────────
+function drawGrid(){
+  const s   = 32;
+  const h3  = Math.sqrt(3);
+  const W   = C.width, H = C.height;
+  const cols = Math.ceil(W / (s * h3)) + 2;
+  const rows = Math.ceil(H / (s * 1.5)) + 2;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(15,30,60,.13)';
+  ctx.lineWidth   = .5;
+  for(let r=-1;r<rows;r++){
+    for(let c=-1;c<cols;c++){
+      const x = c * s * h3 + (r%2 ? s*h3/2 : 0);
+      const y = r * s * 1.5;
+      hex(x, y, s-.5);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// ── Draw a connection line ────────────────────────────────────────────────────
+function drawLine(m){
+  const p  = modXY(m);
+  const gx = GX(), gy = GY();
+  const r  = rgb(m.col);
+
+  ctx.beginPath();
+  ctx.moveTo(gx, gy);
+  ctx.lineTo(p.x, p.y);
+  ctx.strokeStyle = `rgba(140,170,220,.07)`;
+  ctx.lineWidth   = 1;
+  ctx.stroke();
+
+  // Colored glow overlay
+  ctx.beginPath();
+  ctx.moveTo(gx, gy);
+  ctx.lineTo(p.x, p.y);
+  ctx.strokeStyle = `rgba(${r},.04)`;
+  ctx.lineWidth   = 4;
+  ctx.stroke();
+}
+
+// ── Draw pulse dot along line ─────────────────────────────────────────────────
+function drawPulse(p, T){
+  const m  = MODS[p.mi];
+  const mp = modXY(m);
+  const gx = GX(), gy = GY();
+  const t  = (p.t + T * p.spd) % 1;
+
+  const x  = gx + (mp.x - gx) * t;
+  const y  = gy + (mp.y - gy) * t;
+  const r  = rgb(m.col);
+
+  // Inner bright dot
+  ctx.beginPath();
+  ctx.arc(x, y, p.sz, 0, Math.PI*2);
+  ctx.fillStyle = `rgba(${r},${p.a})`;
+  ctx.fill();
+
+  // Soft glow
+  const g = ctx.createRadialGradient(x,y,0, x,y,p.sz*4);
+  g.addColorStop(0, `rgba(${r},.35)`);
+  g.addColorStop(1, `rgba(${r},0)`);
+  ctx.beginPath();
+  ctx.arc(x, y, p.sz*4, 0, Math.PI*2);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+// ── Draw KRONOS hub ───────────────────────────────────────────────────────────
+function drawHub(T){
+  const x = GX(), y = GY();
+
+  // Soft radial glow
+  const grd = ctx.createRadialGradient(x,y,0, x,y,100);
+  grd.addColorStop(0,   'rgba(124,92,245,.18)');
+  grd.addColorStop(.45, 'rgba(79,142,247,.08)');
+  grd.addColorStop(1,   'rgba(79,142,247,0)');
+  ctx.beginPath(); ctx.arc(x,y,100,0,Math.PI*2);
+  ctx.fillStyle = grd; ctx.fill();
+
+  // Dashed rotating rings
+  const rings = [
+    {r:52, sp:.00025, clr:'rgba(124,92,245,.35)', lw:1.5, dash:[5,10]},
+    {r:38, sp:.00040, clr:'rgba(79,142,247,.22)',  lw:1,   dash:[3,8]},
+    {r:25, sp:.00060, clr:'rgba(124,92,245,.20)',  lw:.8,  dash:[2,6]},
+  ];
+  rings.forEach((ring, ri) => {
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(T * ring.sp * (ri%2 ? 1 : -1));
+    ctx.beginPath(); ctx.arc(0,0,ring.r,0,Math.PI*2);
+    ctx.strokeStyle = ring.clr;
+    ctx.lineWidth   = ring.lw;
+    ctx.setLineDash(ring.dash);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // Small dots on each ring at 3 positions
+    for(let d=0;d<3;d++){
+      const a  = T * ring.sp * (ri%2 ? 1 : -1) + (d/3)*Math.PI*2;
+      const dx = x + ring.r * Math.cos(a);
+      const dy = y + ring.r * Math.sin(a);
+      ctx.beginPath(); ctx.arc(dx,dy,1.5,0,Math.PI*2);
+      ctx.fillStyle = ring.clr.replace(/[\d.]+\)$/,'0.9)');
+      ctx.fill();
+    }
+  });
+
+  // Hex body
+  hex(x, y, 34);
+  ctx.fillStyle   = 'rgba(5,8,16,.96)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(124,92,245,.85)';
+  ctx.lineWidth   = 1.8;
+  ctx.stroke();
+
+  // Inner glow fill
+  hex(x, y, 28);
+  const ig = ctx.createRadialGradient(x,y,0, x,y,28);
+  ig.addColorStop(0, 'rgba(124,92,245,.20)');
+  ig.addColorStop(1, 'rgba(124,92,245,0)');
+  ctx.fillStyle = ig; ctx.fill();
+
+  // Center dot
+  ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2);
+  ctx.fillStyle = 'rgba(200,180,255,.95)'; ctx.fill();
+
+  // Label
+  ctx.save();
+  ctx.shadowColor = 'rgba(124,92,245,.6)'; ctx.shadowBlur = 8;
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = 'bold 10.5px "Courier New"';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('KRONOS', x, y - 3);
+  ctx.restore();
+
+  ctx.fillStyle = 'rgba(124,92,245,.7)';
+  ctx.font = '7.5px "Courier New"';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('PULSE TERMINAL', x, y + 8);
+
+  // Tiny orbital dot (Pulse Terminal 1)
+  const oa = T * .0008;
+  const ox = x + 65 * Math.cos(oa);
+  const oy = y + 65 * Math.sin(oa);
+  ctx.beginPath(); ctx.arc(ox,oy,4,0,Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
+  const ptg = ctx.createRadialGradient(ox,oy,0,ox,oy,10);
+  ptg.addColorStop(0,'rgba(255,255,255,.4)');
+  ptg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath(); ctx.arc(ox,oy,10,0,Math.PI*2);
+  ctx.fillStyle = ptg; ctx.fill();
+
+  // "Pulse Terminal 1" label near orbital dot
+  ctx.fillStyle = 'rgba(180,200,240,.45)';
+  ctx.font = '7px "Courier New"';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('Pulse Terminal 1', ox + 10, oy);
+}
+
+// ── Draw a module node ────────────────────────────────────────────────────────
+function drawNode(m, T){
+  const p    = modXY(m);
+  const pulse = Math.sin(T * .0008 + m.phase) * .5 + .5;
+  const s    = m.size;
+  const r    = rgb(m.col);
+
+  // Outer soft glow
+  const outerR = s + 20 + pulse * 8;
+  const og = ctx.createRadialGradient(p.x,p.y, s*.6, p.x,p.y, outerR);
+  og.addColorStop(0, `rgba(${r},.22)`);
+  og.addColorStop(1, `rgba(${r},0)`);
+  ctx.beginPath(); ctx.arc(p.x,p.y,outerR,0,Math.PI*2);
+  ctx.fillStyle = og; ctx.fill();
+
+  // Ghost outer hex
+  hex(p.x, p.y, s + 8);
+  ctx.strokeStyle = `rgba(${r},.10)`;
+  ctx.lineWidth   = .8;
+  ctx.stroke();
+
+  // Dashed second ring
+  hex(p.x, p.y, s + 14);
+  ctx.strokeStyle = `rgba(${r},.06)`;
+  ctx.lineWidth   = .5;
+  ctx.setLineDash([2,6]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Main hex body
+  hex(p.x, p.y, s);
+  ctx.fillStyle   = 'rgba(5,8,16,.93)';
+  ctx.fill();
+  ctx.strokeStyle = `rgba(${r},${.55 + pulse * .35})`;
+  ctx.lineWidth   = 1.5;
+  ctx.save();
+  ctx.shadowColor = `rgba(${r},.5)`; ctx.shadowBlur = 6;
+  ctx.stroke();
+  ctx.restore();
+
+  // Inner filled hex
+  hex(p.x, p.y, s * .55);
+  const ig = ctx.createRadialGradient(p.x,p.y,0, p.x,p.y, s*.55);
+  ig.addColorStop(0, `rgba(${r},.40)`);
+  ig.addColorStop(1, `rgba(${r},.04)`);
+  ctx.fillStyle   = ig; ctx.fill();
+  ctx.strokeStyle = `rgba(${r},.25)`;
+  ctx.lineWidth   = .8;
+  ctx.stroke();
+
+  // Center dot
+  ctx.save();
+  ctx.shadowColor = `rgba(${r},.9)`; ctx.shadowBlur = 6;
+  ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,Math.PI*2);
+  ctx.fillStyle = `rgba(${r},${.8+pulse*.2})`; ctx.fill();
+  ctx.restore();
+
+  // Module name
+  ctx.save();
+  ctx.shadowColor = `rgba(${r},.5)`; ctx.shadowBlur = 4;
+  ctx.fillStyle = `rgba(${r},.92)`;
+  ctx.font = `bold 9px "Courier New"`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText(m.id, p.x, p.y + s + 7);
+  ctx.restore();
+
+  // Health dot (top-right corner)
+  const hc = m.health==='ok' ? '#22c55e' : m.health==='warn' ? '#f59e0b' : '#ef4444';
+  ctx.beginPath();
+  ctx.arc(p.x + s*.68, p.y - s*.68, 3.5, 0, Math.PI*2);
+  ctx.fillStyle = hc; ctx.fill();
+}
+
+// ── Draw small relay node on connection line ──────────────────────────────────
+function drawRelay(m, frac, T){
+  const p  = modXY(m);
+  const gx = GX(), gy = GY();
+  const x  = gx + (p.x - gx) * frac;
+  const y  = gy + (p.y - gy) * frac;
+  const r  = rgb(m.col);
+  const pulse = Math.sin(T * .001 + m.phase + frac * 3) * .5 + .5;
+
+  ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2);
+  ctx.fillStyle = 'rgba(5,8,16,.95)'; ctx.fill();
+  ctx.strokeStyle = `rgba(${r},${.3+pulse*.3})`; ctx.lineWidth = 1; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(x,y,1.5,0,Math.PI*2);
+  ctx.fillStyle = `rgba(${r},.7)`; ctx.fill();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main loop
+// ─────────────────────────────────────────────────────────────────────────────
+const startT = performance.now();
+
+function frame(now){
+  const T = now - startT;
+
+  ctx.clearRect(0,0,C.width,C.height);
+
+  // Background
+  ctx.fillStyle = '#030508';
+  ctx.fillRect(0,0,C.width,C.height);
+
+  // Optional subtle vignette
+  const vig = ctx.createRadialGradient(GX(),GY(),C.height*.2, GX(),GY(),C.height*.7);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0,0,C.width,C.height);
+
+  drawGrid();
+
+  // Lines
+  MODS.forEach(m => drawLine(m));
+
+  // Relay nodes (midpoints)
+  MODS.forEach(m => drawRelay(m, .45, T));
+
+  // Pulse dots
+  pulses.forEach(p => drawPulse(p, T));
+
+  // Hub (above lines)
+  drawHub(T);
+
+  // Module nodes (topmost)
+  MODS.forEach(m => drawNode(m, T));
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Simulated live data
+// ─────────────────────────────────────────────────────────────────────────────
+let simVal   = 10000;
+let startMs  = Date.now();
+const sigPool = [
+  'BTC: BUY 0.71','ETH: SELL 0.43','SOL: BUY 0.61',
+  'DOGE: FLAT 0.18','AVAX: BUY 0.55','BTC: FLAT 0.22'
+];
+const tradePool = [
+  'LONG BTC $1,800','LONG SOL $1,600','LONG AVAX $1,750',
+  'SHORT ETH $1,900','waiting…'
+];
+
+setInterval(()=>{
+  simVal += (Math.random()-.47) * 18;
+  const el = document.getElementById('sv');
+  el.textContent = '$' + simVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  el.className   = 'sv ' + (simVal >= 10000 ? 'g' : 'r');
+
+  document.getElementById('sp').textContent = Math.floor(Math.random()*3);
+  document.getElementById('ss').textContent = sigPool[Math.floor(Math.random()*sigPool.length)];
+
+  // Cycle module events
+  MODS.forEach(m => {
+    m.evtIdx = (m.evtIdx + 1) % m.events.length;
+  });
+
+  // Update event log
+  document.getElementById('el-sig').innerHTML   = `<span>SCANNER</span> ${sigPool[Math.floor(Math.random()*sigPool.length)]}`;
+  document.getElementById('el-trade').innerHTML = `<span>EXECUTION</span> ${tradePool[Math.floor(Math.random()*tradePool.length)]}`;
+  document.getElementById('el-risk').innerHTML  = `<span>RISK</span> ${Math.random()>.2 ? 'signal approved' : 'positions ' + Math.floor(Math.random()*3) + '/3'}`;
+}, 3200);
+
+// Uptime counter
+setInterval(()=>{
+  const s = Math.floor((Date.now()-startMs)/1000);
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor(s%3600/60)).padStart(2,'0');
+  const sc= String(s%60).padStart(2,'0');
+  document.getElementById('su').textContent = `${h}:${m}:${sc}`;
+},1000);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hover tooltip
+// ─────────────────────────────────────────────────────────────────────────────
+const tt = document.getElementById('tt');
+
+C.addEventListener('mousemove', e=>{
+  const rect = C.getBoundingClientRect();
+  const mx   = e.clientX - rect.left;
+  const my   = e.clientY - rect.top;
+
+  let hit = null;
+  MODS.forEach(m=>{
+    const p  = modXY(m);
+    const dx = mx - p.x, dy = my - p.y;
+    if(dx*dx + dy*dy < (m.size+14)**2) hit = m;
+  });
+
+  if(hit){
+    const evt = hit.events[hit.evtIdx];
+    document.getElementById('tt-name').textContent   = hit.id;
+    document.getElementById('tt-name').style.color   = hit.col;
+    document.getElementById('tt-health').innerHTML   = `<span style="color:${hit.health==='ok'?'#22c55e':'#f59e0b'}">● ${hit.health.toUpperCase()}</span>  RUNNING`;
+    document.getElementById('tt-event').textContent  = evt;
+    tt.style.left = (e.clientX + 18) + 'px';
+    tt.style.top  = (e.clientY - 14) + 'px';
+    tt.classList.add('show');
+  } else {
+    tt.classList.remove('show');
+  }
+});
+
+C.addEventListener('mouseleave', ()=> tt.classList.remove('show'));
+
+// Try to connect to real KRONOS backend if running locally
+(async()=>{
+  try{
+    const r = await fetch('/api/kronos', {signal: AbortSignal.timeout(1500)});
+    if(r.ok){
+      const d = await r.json();
+      if(d.modules){
+        d.modules.forEach(mod=>{
+          const m = MODS.find(x=>x.id===mod.name);
+          if(m){
+            m.health = mod.health;
+            m.events = [mod.last_event, ...m.events].slice(0,3);
+          }
+        });
+        if(d.system){
+          const s = d.system;
+          if(s.value)   simVal = s.value;
+          if(s.trades)  document.getElementById('sp').textContent = s.trades;
+        }
+      }
+    }
+  } catch(e){}
+})();
+</script>
+</body>
+</html>
