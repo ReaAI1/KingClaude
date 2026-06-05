@@ -32,14 +32,17 @@ def check_api_key():
 
 
 def load_dotenv():
-    """Load .env file from jarvis directory if present."""
-    env_path = Path(__file__).parent / ".env"
-    if env_path.exists():
-        for line in env_path.read_text().splitlines():
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, _, val = line.partition("=")
-                os.environ.setdefault(key.strip(), val.strip())
+    """Load .env (or .env.example) from jarvis directory if present."""
+    jarvis_dir = Path(__file__).parent
+    for name in (".env", ".env.example"):
+        env_path = jarvis_dir / name
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, val = line.partition("=")
+                    os.environ.setdefault(key.strip(), val.strip())
+            break
 
 
 def main():
