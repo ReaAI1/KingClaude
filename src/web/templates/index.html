@@ -396,15 +396,75 @@
       100% { width: 0%; margin-left: 100%; }
     }
     .loader-text { font-size: 0.78rem; color: var(--text-3); }
+
+    /* ── KRONOS Graph ── */
+    #card-kronos { min-height: 520px; }
+    #kronos-wrap {
+      display: flex;
+      gap: 16px;
+      padding: 8px 0;
+      align-items: flex-start;
+    }
+    #kronos-graph-container {
+      flex: 1 1 0;
+      min-width: 0;
+      background: #0b0e13;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    #kronos-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    /* Module nodes */
+    .kn-rect {
+      rx: 6;
+      transition: fill 0.4s;
+    }
+    /* Module list sidebar */
+    #kronos-module-list {
+      width: 240px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .km-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: var(--bg-2);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .km-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .km-dot.ok    { background: #22c55e; box-shadow: 0 0 4px #22c55e; }
+    .km-dot.warn  { background: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
+    .km-dot.error { background: #ef4444; box-shadow: 0 0 4px #ef4444; }
+    .km-dot.dead  { background: #6b7280; }
+    .km-name { font-weight: 700; color: var(--text-1); font-family: monospace; min-width: 72px; }
+    .km-event { color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    @keyframes pulse-ring {
+      0%   { r: 4; opacity: 0.8; }
+      100% { r: 9; opacity: 0; }
+    }
+    .pulse-dot { animation: pulse-ring 1.2s ease-out infinite; }
   </style>
 </head>
 <body>
 
 <!-- Loading Screen -->
 <div id="loader">
-  <div class="loader-logo">Aurentis AI</div>
+  <div class="loader-logo">Aurentis AI  //  KRONOS</div>
   <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-  <div class="loader-text">Connecting to trading engine...</div>
+  <div class="loader-text">Initializing modules...</div>
 </div>
 
 <!-- Header -->
@@ -413,7 +473,7 @@
     <div class="logo-icon">A</div>
     <div>
       Aurentis <span style="color:var(--accent)">AI</span>
-      <div class="logo-sub">PAPER TRADING SYSTEM {{ version }}</div>
+      <div class="logo-sub">KRONOS v3.0 — {{ version }}</div>
     </div>
   </div>
   <div class="header-right">
@@ -616,6 +676,56 @@
     </div>
   </div>
 
+  <!-- ── KRONOS Node Graph ── -->
+  <div class="card full-width" id="card-kronos">
+    <div class="card-header">
+      <span class="card-title">KRONOS — System Node Graph</span>
+      <span class="card-badge" id="kronos-events">-- events</span>
+    </div>
+    <div id="kronos-wrap">
+      <div id="kronos-graph-container">
+        <svg id="kronos-svg" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="hub-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stop-color="#7c5cf5" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#7c5cf5" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="glow-ok">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glow-warn">
+              <feColorMatrix type="matrix" values="1 0.5 0 0 0  0.5 0.5 0 0 0  0 0 0 0 0  0 0 0 1 0" result="colored"/>
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="colored"/></feMerge>
+            </filter>
+            <filter id="glow-error">
+              <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="colored"/>
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="colored"/></feMerge>
+            </filter>
+            <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="#252d40"/>
+            </marker>
+          </defs>
+          <!-- Connection lines (drawn before nodes so nodes appear on top) -->
+          <g id="kronos-lines"></g>
+          <!-- Hub -->
+          <circle cx="400" cy="210" r="55" fill="url(#hub-glow)"/>
+          <circle cx="400" cy="210" r="38" fill="#181d2a" stroke="#7c5cf5" stroke-width="2"/>
+          <text x="400" y="206" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="700" font-family="monospace">KRONOS</text>
+          <text x="400" y="221" text-anchor="middle" fill="#7c5cf5" font-size="8.5" font-family="monospace" id="kronos-mode">PAPER</text>
+          <!-- Module nodes (populated by JS) -->
+          <g id="kronos-nodes"></g>
+          <!-- Pulse dots on lines -->
+          <g id="kronos-pulses"></g>
+        </svg>
+      </div>
+      <!-- Module status list -->
+      <div id="kronos-module-list"></div>
+    </div>
+  </div>
+
 </div><!-- /#main -->
 
 
@@ -733,7 +843,160 @@ function handleUpdate(d) {
   updateMarket(d.prices     || {}, _latestSignals);
   updateML(d.ml_summary     || {});
   updateStatus(d.status, d.uptime);
+  if (d.kronos) updateKronos(d.kronos);
   if (Date.now() - lastEquityFetch > 60000) fetchEquity();
+}
+
+// ── KRONOS Node Graph ─────────────────────────────────────────────────────
+const HEALTH_COLOR = {
+  ok:    '#22c55e',
+  warn:  '#f59e0b',
+  error: '#ef4444',
+  dead:  '#6b7280',
+};
+const HEALTH_STROKE = {
+  ok:    '#22c55e',
+  warn:  '#f59e0b',
+  error: '#ef4444',
+  dead:  '#374151',
+};
+
+const KN_MODULE_ORDER = [
+  "DATA","BRAIN","SCANNER","RISK","EXECUTION","PORTFOLIO","WATCHDOG","ALERTS"
+];
+const KN_CX = 400, KN_CY = 210, KN_R = 165;
+
+function _kronosXY(idx, total) {
+  const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
+  return {
+    x: KN_CX + KN_R * Math.cos(angle),
+    y: KN_CY + KN_R * Math.sin(angle),
+  };
+}
+
+function _svgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function updateKronos(kronos) {
+  const modules = kronos.modules || [];
+  const system  = kronos.system  || {};
+  const bus     = kronos.bus     || {};
+
+  // Update badge
+  const evBadge = document.getElementById('kronos-events');
+  if (evBadge) evBadge.textContent = (bus.total_events || 0) + ' events';
+
+  const modeEl = document.getElementById('kronos-mode');
+  if (modeEl) modeEl.textContent = (system.mode || 'PAPER').toUpperCase();
+
+  // Build module map by name
+  const byName = {};
+  for (const m of modules) byName[m.name] = m;
+
+  const total = KN_MODULE_ORDER.length;
+  const linesG   = document.getElementById('kronos-lines');
+  const nodesG   = document.getElementById('kronos-nodes');
+  const pulsesG  = document.getElementById('kronos-pulses');
+  const listDiv  = document.getElementById('kronos-module-list');
+
+  linesG.innerHTML  = '';
+  nodesG.innerHTML  = '';
+  pulsesG.innerHTML = '';
+  listDiv.innerHTML = '';
+
+  KN_MODULE_ORDER.forEach((name, idx) => {
+    const m   = byName[name] || { name, health: 'dead', status: 'INIT', last_event: '—', errors: 0 };
+    const pos = _kronosXY(idx, total);
+    const hc  = HEALTH_COLOR[m.health]  || '#6b7280';
+    const hs  = HEALTH_STROKE[m.health] || '#374151';
+
+    // Line from hub to node
+    const line = _svgEl('line', {
+      x1: KN_CX, y1: KN_CY, x2: pos.x, y2: pos.y,
+      stroke: m.health === 'ok' ? '#1e2a40' : (m.health === 'warn' ? '#3b2f0a' : '#2a1010'),
+      'stroke-width': '1.5',
+      'stroke-dasharray': '4 4',
+    });
+    linesG.appendChild(line);
+
+    // Animated pulse dot on line (ok modules only)
+    if (m.health === 'ok') {
+      const pulse = _svgEl('circle', {
+        r: '4', fill: hc, opacity: '0.7',
+        class: 'pulse-dot',
+      });
+      // Animate along line using animateMotion
+      const anim = _svgEl('animateMotion', {
+        dur: (1.5 + idx * 0.3) + 's',
+        repeatCount: 'indefinite',
+        path: `M${KN_CX},${KN_CY} L${pos.x},${pos.y}`,
+      });
+      pulse.appendChild(anim);
+      pulsesG.appendChild(pulse);
+    }
+
+    // Node rect
+    const nw = 80, nh = 34;
+    const nx = pos.x - nw / 2, ny = pos.y - nh / 2;
+    const rect = _svgEl('rect', {
+      x: nx, y: ny, width: nw, height: nh, rx: 6,
+      fill: '#111620', stroke: hs, 'stroke-width': '1.5',
+    });
+    nodesG.appendChild(rect);
+
+    // Health indicator dot
+    const dot = _svgEl('circle', {
+      cx: nx + 9, cy: pos.y, r: '4', fill: hc,
+    });
+    nodesG.appendChild(dot);
+
+    // Module name
+    const label = _svgEl('text', {
+      x: nx + 18, y: pos.y - 5,
+      fill: '#e8ecf5', 'font-size': '9', 'font-weight': '700',
+      'font-family': 'monospace',
+    });
+    label.textContent = name;
+    nodesG.appendChild(label);
+
+    // Status / last event (truncated)
+    const sub = _svgEl('text', {
+      x: nx + 18, y: pos.y + 8,
+      fill: '#535c72', 'font-size': '7.5', 'font-family': 'monospace',
+    });
+    const evt = (m.last_event || '—').substring(0, 18);
+    sub.textContent = evt;
+    nodesG.appendChild(sub);
+
+    // Sidebar row
+    const row = document.createElement('div');
+    row.className = 'km-row';
+    row.innerHTML = `
+      <div class="km-dot ${m.health}"></div>
+      <span class="km-name">${name}</span>
+      <span class="km-event" title="${m.last_event || '—'}">${m.last_event || '—'}</span>
+    `;
+    listDiv.appendChild(row);
+  });
+}
+
+// Fetch KRONOS state on initial load
+async function fetchKronos() {
+  try {
+    const r = await fetch('/api/kronos');
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.modules) {
+      updateKronos({
+        modules: d.modules,
+        system:  d.system || {},
+        bus:     d.bus    || {},
+      });
+    }
+  } catch(e) {}
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────
@@ -1050,6 +1313,7 @@ function fmtPrice(p) {
 // ── Kick off ──────────────────────────────────────────────────────────────
 initCharts();
 connectWS();
+fetchKronos();
 
 // Refresh candles every 5 minutes
 setInterval(fetchCandles, 5 * 60 * 1000);

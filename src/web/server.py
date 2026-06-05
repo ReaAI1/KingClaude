@@ -111,6 +111,15 @@ async def api_candles(coin: str = "BTC", tf: str = "1h", _=Depends(require_auth)
     return c
 
 
+@app.get("/api/kronos")
+async def api_kronos(_=Depends(require_auth)):
+    if not _engine:
+        return JSONResponse({"error": "engine not ready"}, status_code=503)
+    if hasattr(_engine, "kronos_snapshot"):
+        return _engine.kronos_snapshot()
+    return JSONResponse({"error": "not a KRONOS engine"}, status_code=501)
+
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "ts": time.time()}
@@ -169,6 +178,10 @@ async def websocket_endpoint(ws: WebSocket):
                 continue
             prices = _engine.state.prices
             st     = _engine.portfolio.stats(prices)
+            kronos_snap = (
+                _engine.kronos_snapshot()
+                if hasattr(_engine, "kronos_snapshot") else {}
+            )
             data   = {
                 "type":       "update",
                 "ts":         time.time(),
@@ -180,6 +193,11 @@ async def websocket_endpoint(ws: WebSocket):
                 "status":     _engine.state.status,
                 "uptime":     _engine.state.uptime,
                 "ml_summary": _engine.ml.summary(),
+                "kronos":     {
+                    "modules": kronos_snap.get("modules", []),
+                    "system":  kronos_snap.get("system", {}),
+                    "bus":     kronos_snap.get("bus", {}),
+                },
             }
             await _mgr.broadcast(data)
     except WebSocketDisconnect:

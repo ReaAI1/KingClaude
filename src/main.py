@@ -1,12 +1,11 @@
 """
-Aurentis AI — Entry point.
-Starts the web server immediately (so Render health checks pass),
-then bootstraps the trading engine in the background.
+Aurentis AI — Entry point (KRONOS architecture).
+Starts the web server immediately (cloud health checks), then bootstraps
+KRONOS — the modular event-driven trading orchestrator — in the background.
 """
 import logging
 import sys
 import threading
-import time
 
 # ── Logging ───────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -24,38 +23,34 @@ log = logging.getLogger("aurentis.main")
 from src import config as cfg
 from src.database import Database
 from src.alerts   import DiscordAlerter
-from src.trader   import TradingEngine
+from src.kronos   import Kronos
 from src.web      import server as web
 
 
 def main():
     log.info("=" * 55)
-    log.info("  Aurentis AI Trading System  v2.0")
+    log.info("  Aurentis AI  //  KRONOS v3.0")
     log.info("  Capital: $%,.0f  |  Pairs: %s", cfg.INITIAL_CAPITAL, len(cfg.TRADING_PAIRS))
     log.info("=" * 55)
 
     db      = Database(cfg.DB_PATH)
     alerter = DiscordAlerter(cfg.DISCORD_WEBHOOK)
-    engine  = TradingEngine(db, alerter)
+    kronos  = Kronos(db, alerter)
 
     # Inject into web server before it starts
-    web.init(engine, db)
+    web.init(kronos, db)
 
-    # Bootstrap + start engine in background thread
-    # This lets the web server start immediately so cloud health checks pass
-    def _start_engine():
+    def _start_kronos():
         try:
-            log.info("Bootstrapping engine (loading candles + training ML)...")
-            engine.bootstrap()
-            engine.start()
-            log.info("Engine is LIVE — trading started.")
+            log.info("KRONOS bootstrap — loading candles + training BRAIN...")
+            kronos.bootstrap()
+            kronos.start()
+            log.info("KRONOS ONLINE — all modules active.")
         except Exception as exc:
-            log.error("Engine bootstrap failed: %s", exc, exc_info=True)
+            log.error("KRONOS bootstrap failed: %s", exc, exc_info=True)
 
-    t = threading.Thread(target=_start_engine, daemon=True, name="bootstrap")
-    t.start()
+    threading.Thread(target=_start_kronos, daemon=True, name="bootstrap").start()
 
-    # Start web server immediately — dashboard shows "Starting..." until ready
     log.info("Web dashboard: http://0.0.0.0:%d", cfg.WEB_PORT)
     web.run(host=cfg.WEB_HOST, port=cfg.WEB_PORT)
 
