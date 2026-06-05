@@ -9,110 +9,307 @@
   html,body{width:100%;height:100%;overflow:hidden;background:#030508;
     font-family:'Courier New',Courier,monospace;color:#c8d8f0}
 
-  /* ── Header ── */
+  /* ── Header (two rows) ── */
   #hdr{
     position:fixed;top:0;left:0;right:0;z-index:20;
-    height:44px;
     background:rgba(3,5,8,.97);
     border-bottom:1px solid #0c1522;
-    display:flex;align-items:center;gap:0;
   }
+  #hdr-top{
+    height:44px;display:flex;align-items:center;padding:0 0 0 0;gap:0;
+  }
+  #hdr-prices{
+    height:24px;display:flex;align-items:center;padding:0 16px;gap:20px;
+    border-top:1px solid #080f1c;overflow:hidden;
+    font-size:.62rem;color:#1e3050;letter-spacing:.3px;
+  }
+  .pi{display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .pi-sym{color:#253550;font-weight:700}
+  .pi-price{color:#4a6a90;font-weight:700}
+  .pi-chg{font-size:.58rem}
+  .pi-chg.up{color:#1a5a30}.pi-chg.dn{color:#5a1a22}
+
+  /* tabs */
   .tab{
-    height:100%;display:flex;align-items:center;gap:7px;padding:0 16px;
-    font-size:.68rem;color:#253550;border-right:1px solid #0c1522;
+    height:44px;display:flex;align-items:center;gap:7px;padding:0 16px;
+    font-size:.67rem;color:#253550;border-right:1px solid #080f1c;
     cursor:pointer;letter-spacing:.8px;text-transform:uppercase;
     transition:color .2s;user-select:none;
   }
   .tab.on{color:#c8d8f0}
-  .tab .n{color:#7c5cf5;font-weight:900;font-size:.72rem}
-  .stats{margin-left:auto;display:flex;align-items:center;gap:28px;padding-right:20px}
-  .sb{text-align:right;line-height:1.25}
-  .sl{font-size:.52rem;color:#1a2f4a;letter-spacing:1.8px;text-transform:uppercase}
-  .sv{font-size:.88rem;font-weight:800;letter-spacing:-.5px;color:#c8d8f0}
-  .sv.g{color:#22c55e}.sv.r{color:#ef4444}
+  .tab .n{color:#7c5cf5;font-weight:900;font-size:.7rem}
 
-  /* ── Canvas ── */
+  /* stats strip */
+  #stats{
+    margin-left:auto;display:flex;align-items:center;
+    gap:0;border-left:1px solid #080f1c;
+  }
+  .sb{
+    padding:0 16px;height:44px;display:flex;flex-direction:column;
+    justify-content:center;align-items:flex-end;
+    border-right:1px solid #080f1c;min-width:80px;
+  }
+  .sl{font-size:.49rem;color:#1a2f4a;letter-spacing:2px;text-transform:uppercase;margin-bottom:1px}
+  .sv{font-size:.86rem;font-weight:800;letter-spacing:-.5px;color:#c8d8f0;line-height:1}
+  .sv.g{color:#22c55e}.sv.r{color:#ef4444}.sv.y{color:#f59e0b}
+  .sv-sub{font-size:.56rem;color:#1e3050;letter-spacing:.2px;margin-top:1px}
+
+  /* connection badge + gear */
+  #conn{
+    padding:0 12px;height:44px;display:flex;align-items:center;gap:7px;
+    font-size:.65rem;letter-spacing:.5px;cursor:pointer;
+  }
+  .dot{width:7px;height:7px;border-radius:50%}
+  .dot.live{background:#22c55e;box-shadow:0 0 6px #22c55e}
+  .dot.demo{background:#f59e0b;box-shadow:0 0 5px #f59e0b}
+  .dot.conn{background:#4488ff;animation:blink .8s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  #gear-btn{
+    padding:0 14px;height:44px;display:flex;align-items:center;
+    font-size:1rem;color:#253550;cursor:pointer;
+    border-left:1px solid #080f1c;
+    transition:color .2s;
+  }
+  #gear-btn:hover{color:#7c5cf5}
+
+  /* Canvas */
   #c{
-    position:fixed;top:44px;left:0;
-    width:100vw;height:calc(100vh - 44px);
+    position:fixed;top:68px;left:0;
+    width:100vw;height:calc(100vh - 68px);
     display:block;
   }
 
+  /* ── Config panel ── */
+  #cfg{
+    display:none;
+    position:fixed;top:68px;right:0;z-index:50;
+    width:280px;
+    background:rgba(4,7,13,.98);
+    border:1px solid #0c1a2a;border-top:none;
+    border-radius:0 0 0 8px;
+    padding:16px;
+    font-size:.75rem;
+  }
+  #cfg.show{display:block}
+  #cfg h3{color:#7c5cf5;font-size:.75rem;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
+  #cfg label{display:block;color:#253550;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;margin-top:10px}
+  #cfg input{
+    width:100%;background:#070b12;border:1px solid #0c1a2a;border-radius:4px;
+    color:#c8d8f0;padding:6px 8px;font-family:inherit;font-size:.72rem;outline:none;
+  }
+  #cfg input:focus{border-color:#7c5cf5}
+  #cfg-connect{
+    width:100%;margin-top:14px;padding:8px;background:#7c5cf5;border:none;
+    border-radius:5px;color:#fff;font-family:inherit;font-size:.72rem;font-weight:700;
+    letter-spacing:1px;cursor:pointer;text-transform:uppercase;
+    transition:background .2s;
+  }
+  #cfg-connect:hover{background:#9b7df8}
+  #cfg-status{margin-top:8px;font-size:.65rem;color:#1e3050;text-align:center;min-height:16px}
+
   /* ── Tooltip ── */
   #tt{
-    position:fixed;
-    background:rgba(4,7,13,.97);
-    border:1px solid #0c1a2a;
-    border-radius:7px;
-    padding:10px 14px;
-    font-size:.72rem;
-    pointer-events:none;z-index:30;
-    opacity:0;transition:opacity .15s;
-    min-width:180px;max-width:240px;
+    position:fixed;background:rgba(4,7,13,.97);
+    border:1px solid #0c1a2a;border-radius:7px;
+    padding:12px 16px;font-size:.72rem;pointer-events:none;z-index:40;
+    opacity:0;transition:opacity .15s;min-width:200px;max-width:260px;
     backdrop-filter:blur(4px);
   }
   #tt.show{opacity:1}
-  #tt-name{font-weight:800;font-size:.82rem;margin-bottom:5px}
-  #tt-health{font-size:.68rem;margin-bottom:4px}
-  #tt-event{color:#3a5070;font-size:.67rem;line-height:1.5}
+  #tt-name{font-weight:800;font-size:.82rem;margin-bottom:6px}
+  #tt-health{font-size:.68rem;margin-bottom:6px}
+  #tt-rows{display:flex;flex-direction:column;gap:4px}
+  .tt-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .tt-row .lbl{color:#1e3050;font-size:.64rem;text-transform:uppercase;letter-spacing:.8px}
+  .tt-row .val{color:#c8d8f0;font-size:.72rem;font-weight:700;text-align:right}
+  .tt-row .val.g{color:#22c55e}.tt-row .val.r{color:#ef4444}
 
   /* ── Bottom event log ── */
   #elog{
-    position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
-    display:flex;gap:10px;z-index:10;
-    font-size:.62rem;color:#253550;letter-spacing:.5px;
+    position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
+    display:flex;gap:8px;z-index:10;
+    font-size:.6rem;color:#1e3050;letter-spacing:.4px;
     pointer-events:none;
   }
-  .eitem{padding:3px 10px;border:1px solid #0c1522;border-radius:12px;
-    background:rgba(4,7,12,.85);white-space:nowrap}
-  .eitem span{color:#7c5cf5}
+  .eitem{
+    padding:3px 10px;border:1px solid #080f1c;border-radius:12px;
+    background:rgba(4,7,12,.9);white-space:nowrap;
+  }
+  .eitem b{color:#7c5cf5}
 </style>
 </head>
 <body>
 
 <!-- Header -->
 <div id="hdr">
-  <div class="tab on"><span class="n">[1]</span> EVENTS</div>
-  <div class="tab"><span class="n">[2]</span> BRAIN</div>
-  <div class="tab"><span class="n">[3]</span> DECK</div>
-  <div class="stats">
-    <div class="sb"><div class="sl">VALUE</div><div class="sv g" id="sv">$10,000</div></div>
-    <div class="sb"><div class="sl">POSITIONS</div><div class="sv" id="sp">0</div></div>
-    <div class="sb"><div class="sl">SIGNALS</div><div class="sv" id="ss">—</div></div>
-    <div class="sb"><div class="sl">UPTIME</div><div class="sv" id="su">00:00:00</div></div>
+  <div id="hdr-top">
+    <div class="tab on"><span class="n">[1]</span> EVENTS</div>
+    <div class="tab"><span class="n">[2]</span> BRAIN</div>
+    <div class="tab"><span class="n">[3]</span> DECK</div>
+    <div id="stats">
+      <div class="sb">
+        <div class="sl">Portfolio</div>
+        <div class="sv g" id="sv">$--</div>
+        <div class="sv-sub" id="sv-sub">-- from start</div>
+      </div>
+      <div class="sb">
+        <div class="sl">Today P&amp;L</div>
+        <div class="sv" id="sd">--%</div>
+        <div class="sv-sub">vs day start</div>
+      </div>
+      <div class="sb">
+        <div class="sl">Realized</div>
+        <div class="sv" id="srl">$--</div>
+        <div class="sv-sub" id="srl-sub">-- trades</div>
+      </div>
+      <div class="sb">
+        <div class="sl">Win Rate</div>
+        <div class="sv" id="swr">--%</div>
+        <div class="sv-sub" id="swr-sub">PF --</div>
+      </div>
+      <div class="sb">
+        <div class="sl">Positions</div>
+        <div class="sv" id="spos">0/3</div>
+        <div class="sv-sub" id="spos-sub">$-- free cash</div>
+      </div>
+      <div class="sb">
+        <div class="sl">Uptime</div>
+        <div class="sv" id="sut">--:--:--</div>
+        <div class="sv-sub" id="sut-sub">loop --</div>
+      </div>
+    </div>
+    <div id="conn" onclick="toggleCfg()">
+      <div class="dot demo" id="conn-dot"></div>
+      <span id="conn-lbl" style="color:#253550">DEMO</span>
+    </div>
+    <div id="gear-btn" onclick="toggleCfg()">⚙</div>
+  </div>
+
+  <!-- Price ticker row -->
+  <div id="hdr-prices">
+    <div class="pi" id="pi-BTC"><span class="pi-sym">BTC</span><span class="pi-price">$--</span><span class="pi-chg">--</span></div>
+    <div class="pi" id="pi-ETH"><span class="pi-sym">ETH</span><span class="pi-price">$--</span><span class="pi-chg">--</span></div>
+    <div class="pi" id="pi-SOL"><span class="pi-sym">SOL</span><span class="pi-price">$--</span><span class="pi-chg">--</span></div>
+    <div class="pi" id="pi-DOGE"><span class="pi-sym">DOGE</span><span class="pi-price">$--</span><span class="pi-chg">--</span></div>
+    <div class="pi" id="pi-AVAX"><span class="pi-sym">AVAX</span><span class="pi-price">$--</span><span class="pi-chg">--</span></div>
+    <div style="margin-left:auto;color:#0d1a2a;font-size:.58rem" id="ts-lbl">—</div>
   </div>
 </div>
 
-<!-- Main canvas -->
+<!-- Config panel -->
+<div id="cfg">
+  <h3>⚙ Connect to Trading Bot</h3>
+  <label>Server URL</label>
+  <input id="cfg-url" type="text" value="http://localhost:8000" placeholder="http://localhost:8000">
+  <label>Username</label>
+  <input id="cfg-user" type="text" value="aurentis" placeholder="aurentis">
+  <label>Password</label>
+  <input id="cfg-pass" type="password" value="changeme" placeholder="changeme">
+  <button id="cfg-connect" onclick="cfgConnect()">Connect</button>
+  <div id="cfg-status"></div>
+</div>
+
+<!-- Canvas -->
 <canvas id="c"></canvas>
 
 <!-- Tooltip -->
 <div id="tt">
   <div id="tt-name"></div>
   <div id="tt-health"></div>
-  <div id="tt-event"></div>
+  <div id="tt-rows"></div>
 </div>
 
-<!-- Bottom event log -->
+<!-- Event log -->
 <div id="elog">
-  <div class="eitem"><span>DATA</span> prices.update × 5s</div>
-  <div class="eitem" id="el-sig"><span>SCANNER</span> BTC: BUY 0.71</div>
-  <div class="eitem" id="el-trade"><span>EXECUTION</span> waiting…</div>
-  <div class="eitem" id="el-risk"><span>RISK</span> circuit ok</div>
+  <div class="eitem"><b>DATA</b> <span id="el-d">prices.update × 5s</span></div>
+  <div class="eitem"><b>SCANNER</b> <span id="el-s">initializing…</span></div>
+  <div class="eitem"><b>EXECUTION</b> <span id="el-e">waiting…</span></div>
+  <div class="eitem"><b>RISK</b> <span id="el-r">circuit ok</span></div>
 </div>
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// KRONOS Node Graph — standalone visualization
+// KRONOS visualization v2 — live bot connection + accurate data
 // ─────────────────────────────────────────────────────────────────────────────
 
 const C   = document.getElementById('c');
 const ctx = C.getContext('2d');
 
-// ── Resize ────────────────────────────────────────────────────────────────────
+// ── Config ───────────────────────────────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const CFG = {
+  host: params.get('host') || 'localhost:8000',
+  user: params.get('user') || 'aurentis',
+  pass: params.get('pass') || 'changeme',
+};
+// Pre-fill config panel
+document.getElementById('cfg-url').value  = 'http://' + CFG.host;
+document.getElementById('cfg-user').value = CFG.user;
+document.getElementById('cfg-pass').value = CFG.pass;
+
+// ── Live state from bot ───────────────────────────────────────────────────────
+const S = {
+  connected:   false,
+  mode:        'demo',   // 'live' | 'demo' | 'connecting'
+  value:       10000,
+  initial:     10000,
+  cash:        10000,
+  realized:    0,
+  fees:        0,
+  retPct:      0,
+  dayPct:      0,
+  winRate:     0,
+  trades:      0,
+  pf:          0,
+  openCount:   0,
+  halted:      false,
+  uptime:      0,
+  loopCount:   0,
+  prices:      {},
+  prevPrices:  {},
+  signals:     {},
+  mlSummary:   {},
+  positions:   [],
+  kronosMods:  [],
+  busEvents:   0,
+};
+
+// ── Module definitions ────────────────────────────────────────────────────────
+const MODS = [
+  { id:'DATA',      col:'#00e5ff', size:36, health:'ok', sub:'loading…',  events:['prices.update × 5s','candles loaded','BTC live'] },
+  { id:'BRAIN',     col:'#ff8c00', size:34, health:'ok', sub:'pending',   events:['BTC acc=72.1%','ETH acc=68.4%','retrain in 3h'] },
+  { id:'SCANNER',   col:'#f5d020', size:34, health:'ok', sub:'scanning',  events:['BTC: B0.71','SOL: S0.43','loop #1402'] },
+  { id:'RISK',      col:'#ff2244', size:34, health:'ok', sub:'ok',        events:['signal approved','positions 1/3','circuit ok'] },
+  { id:'EXECUTION', col:'#00ff88', size:38, health:'ok', sub:'1 open',    events:['LONG BTC $1,800','entry 104,200','SL 101k'] },
+  { id:'PORTFOLIO', col:'#9944ff', size:34, health:'ok', sub:'$10,023',   events:['1 open $10,023','realized +$182','cash $8,200'] },
+  { id:'WATCHDOG',  col:'#4488ff', size:30, health:'ok', sub:'active',    events:['all 7 ok','snapshot saved','BTC live'] },
+  { id:'ALERTS',    col:'#ff44cc', size:28, health:'ok', sub:'ready',     events:['Discord ready','queue empty','12 trades alerted'] },
+];
+const N = MODS.length;
+MODS.forEach((m, i) => {
+  m.angle  = (i / N) * 2 * Math.PI - Math.PI / 2;
+  m.phase  = Math.random() * Math.PI * 2;
+  m.evtIdx = 0;
+  m.flash  = 0;   // 0-1 flash intensity (for trade open events)
+});
+
+// ── Pulse dots ────────────────────────────────────────────────────────────────
+const PULSES = [];
+MODS.forEach((m, mi) => {
+  for(let j=0;j<4;j++){
+    PULSES.push({
+      mi, t:(j/4),
+      spd:.00055 + Math.random()*.0004,
+      sz: 1.8 + Math.random()*1.6,
+      a:  .5  + Math.random()*.45,
+    });
+  }
+});
+
+// ── Canvas resize ─────────────────────────────────────────────────────────────
 function resize(){
   C.width  = window.innerWidth;
-  C.height = window.innerHeight - 44;
+  C.height = window.innerHeight - 68;
 }
 resize();
 window.addEventListener('resize', resize);
@@ -120,93 +317,21 @@ window.addEventListener('resize', resize);
 const GX = () => C.width  * .5;
 const GY = () => C.height * .5;
 
-// ── Module definitions ────────────────────────────────────────────────────────
-const MODS = [
-  {
-    id:'DATA',      col:'#00e5ff', size:36,
-    health:'ok',
-    events:['prices.update × 5s','BTC $104,240 live','candles loaded 5 coins']
-  },
-  {
-    id:'BRAIN',     col:'#ff8c00', size:34,
-    health:'ok',
-    events:['BTC acc=72.1%','ETH acc=68.4%','retrain in 3.1h']
-  },
-  {
-    id:'SCANNER',   col:'#f5d020', size:34,
-    health:'ok',
-    events:['BTC:B0.71 ETH:F0.12','SOL:S0.43 DOGE:B0.31','loop #1,402']
-  },
-  {
-    id:'RISK',      col:'#ff2244', size:34,
-    health:'ok',
-    events:['signal APPROVED','positions 1/3','circuit ok']
-  },
-  {
-    id:'EXECUTION', col:'#00ff88', size:38,
-    health:'ok',
-    events:['LONG BTC $1,800','entry 104,200 SL 101k','1 open $10,182']
-  },
-  {
-    id:'PORTFOLIO', col:'#9944ff', size:34,
-    health:'ok',
-    events:['1 open  value=$10,182','realized +$182','cash $8,200']
-  },
-  {
-    id:'WATCHDOG',  col:'#4488ff', size:30,
-    health:'ok',
-    events:['all 7 modules ok','snapshot saved','BTC prices live']
-  },
-  {
-    id:'ALERTS',    col:'#ff44cc', size:28,
-    health:'ok',
-    events:['Discord: OPEN BTC','alert queue empty','connected']
-  },
-];
-
-const N = MODS.length;
-MODS.forEach((m, i) => {
-  m.angle    = (i / N) * 2 * Math.PI - Math.PI / 2;
-  m.phase    = Math.random() * Math.PI * 2;
-  m.evtIdx   = 0;
-});
-
-function RING(){ return Math.min(C.width * .34, C.height * .38, 230); }
+// Ring radius — calculated to prevent clipping on any screen
+function RING(){
+  return Math.min(
+    C.width  * .29,
+    C.height * .34,
+    195
+  );
+}
 
 function modXY(m){
   const r = RING();
-  return { x: GX() + r * Math.cos(m.angle), y: GY() + r * Math.sin(m.angle) };
+  return { x:GX() + r*Math.cos(m.angle), y:GY() + r*Math.sin(m.angle) };
 }
 
-// ── Pulse dots ────────────────────────────────────────────────────────────────
-// Each moves from center→module continuously
-const PULSE_COUNT = 4;
-const pulses = [];
-MODS.forEach((m, mi) => {
-  for(let j = 0; j < PULSE_COUNT; j++){
-    pulses.push({
-      mi,
-      t:   j / PULSE_COUNT,         // 0 = at center, 1 = at module
-      spd: .0006 + Math.random() * .0004,
-      sz:  1.8 + Math.random() * 1.5,
-      a:   .5 + Math.random() * .5,
-    });
-  }
-});
-
-// ── Hex path helper ───────────────────────────────────────────────────────────
-function hex(cx, cy, r, flat=false){
-  ctx.beginPath();
-  for(let i=0;i<6;i++){
-    const a = flat ? (Math.PI/3)*i : (Math.PI/3)*i + Math.PI/6;
-    const px = cx + r * Math.cos(a);
-    const py = cy + r * Math.sin(a);
-    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
-  }
-  ctx.closePath();
-}
-
-// ── rgb helper ────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function rgb(hex6){
   return [
     parseInt(hex6.slice(1,3),16),
@@ -215,400 +340,613 @@ function rgb(hex6){
   ].join(',');
 }
 
-// ── Draw hex background grid ──────────────────────────────────────────────────
+function hex(x,y,r,flat=false){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a = flat?(Math.PI/3)*i:(Math.PI/3)*i+Math.PI/6;
+    i===0?ctx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a))
+         :ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));
+  }
+  ctx.closePath();
+}
+
+function fmt$(v){
+  return '$'+(+v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtPct(v){
+  return (v>=0?'+':'')+Number(v).toFixed(2)+'%';
+}
+function fmtPrice(p){
+  if(!p||p==='--') return '--';
+  const n = parseFloat(p);
+  if(n>=1000) return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(n>=1)    return '$'+n.toFixed(4);
+  return '$'+n.toFixed(6);
+}
+
+// ── Drawing ───────────────────────────────────────────────────────────────────
+
 function drawGrid(){
-  const s   = 32;
-  const h3  = Math.sqrt(3);
-  const W   = C.width, H = C.height;
-  const cols = Math.ceil(W / (s * h3)) + 2;
-  const rows = Math.ceil(H / (s * 1.5)) + 2;
+  const s=32, h3=Math.sqrt(3);
+  const W=C.width, H=C.height;
   ctx.save();
-  ctx.strokeStyle = 'rgba(15,30,60,.13)';
-  ctx.lineWidth   = .5;
-  for(let r=-1;r<rows;r++){
-    for(let c=-1;c<cols;c++){
-      const x = c * s * h3 + (r%2 ? s*h3/2 : 0);
-      const y = r * s * 1.5;
-      hex(x, y, s-.5);
+  ctx.strokeStyle='rgba(12,26,55,.14)';
+  ctx.lineWidth=.5;
+  for(let r=-1;r<Math.ceil(H/(s*1.5))+1;r++){
+    for(let c=-1;c<Math.ceil(W/(s*h3))+1;c++){
+      const x=c*s*h3+(r%2?s*h3/2:0), y=r*s*1.5;
+      hex(x,y,s-.5);
       ctx.stroke();
     }
   }
   ctx.restore();
 }
 
-// ── Draw a connection line ────────────────────────────────────────────────────
 function drawLine(m){
-  const p  = modXY(m);
-  const gx = GX(), gy = GY();
-  const r  = rgb(m.col);
-
-  ctx.beginPath();
-  ctx.moveTo(gx, gy);
-  ctx.lineTo(p.x, p.y);
-  ctx.strokeStyle = `rgba(140,170,220,.07)`;
-  ctx.lineWidth   = 1;
-  ctx.stroke();
-
-  // Colored glow overlay
-  ctx.beginPath();
-  ctx.moveTo(gx, gy);
-  ctx.lineTo(p.x, p.y);
-  ctx.strokeStyle = `rgba(${r},.04)`;
-  ctx.lineWidth   = 4;
-  ctx.stroke();
+  const p=modXY(m); const gx=GX(),gy=GY();
+  const r=rgb(m.col);
+  ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle=`rgba(140,170,220,.06)`;
+  ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle=`rgba(${r},.035)`;
+  ctx.lineWidth=4; ctx.stroke();
 }
 
-// ── Draw pulse dot along line ─────────────────────────────────────────────────
-function drawPulse(p, T){
-  const m  = MODS[p.mi];
-  const mp = modXY(m);
-  const gx = GX(), gy = GY();
-  const t  = (p.t + T * p.spd) % 1;
-
-  const x  = gx + (mp.x - gx) * t;
-  const y  = gy + (mp.y - gy) * t;
-  const r  = rgb(m.col);
-
-  // Inner bright dot
-  ctx.beginPath();
-  ctx.arc(x, y, p.sz, 0, Math.PI*2);
-  ctx.fillStyle = `rgba(${r},${p.a})`;
-  ctx.fill();
-
-  // Soft glow
-  const g = ctx.createRadialGradient(x,y,0, x,y,p.sz*4);
-  g.addColorStop(0, `rgba(${r},.35)`);
-  g.addColorStop(1, `rgba(${r},0)`);
-  ctx.beginPath();
-  ctx.arc(x, y, p.sz*4, 0, Math.PI*2);
-  ctx.fillStyle = g;
-  ctx.fill();
+function drawPulse(p,T){
+  const m=MODS[p.mi]; const mp=modXY(m);
+  const gx=GX(),gy=GY();
+  const t=(p.t+T*p.spd)%1;
+  const x=gx+(mp.x-gx)*t, y=gy+(mp.y-gy)*t;
+  const r=rgb(m.col);
+  ctx.beginPath(); ctx.arc(x,y,p.sz,0,Math.PI*2);
+  ctx.fillStyle=`rgba(${r},${p.a})`; ctx.fill();
+  const g=ctx.createRadialGradient(x,y,0,x,y,p.sz*4);
+  g.addColorStop(0,`rgba(${r},.3)`); g.addColorStop(1,`rgba(${r},0)`);
+  ctx.beginPath(); ctx.arc(x,y,p.sz*4,0,Math.PI*2);
+  ctx.fillStyle=g; ctx.fill();
 }
 
-// ── Draw KRONOS hub ───────────────────────────────────────────────────────────
+function drawRelay(m,frac,T){
+  const p=modXY(m); const gx=GX(),gy=GY();
+  const x=gx+(p.x-gx)*frac, y=gy+(p.y-gy)*frac;
+  const r=rgb(m.col);
+  const pulse=Math.sin(T*.001+m.phase+frac*3)*.5+.5;
+  ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2);
+  ctx.fillStyle='rgba(5,8,16,.95)'; ctx.fill();
+  ctx.strokeStyle=`rgba(${r},${.28+pulse*.28})`; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x,y,1.5,0,Math.PI*2);
+  ctx.fillStyle=`rgba(${r},.65)`; ctx.fill();
+}
+
 function drawHub(T){
-  const x = GX(), y = GY();
-
-  // Soft radial glow
-  const grd = ctx.createRadialGradient(x,y,0, x,y,100);
-  grd.addColorStop(0,   'rgba(124,92,245,.18)');
-  grd.addColorStop(.45, 'rgba(79,142,247,.08)');
-  grd.addColorStop(1,   'rgba(79,142,247,0)');
+  const x=GX(), y=GY();
+  // Outer glow
+  const grd=ctx.createRadialGradient(x,y,0,x,y,100);
+  grd.addColorStop(0,'rgba(124,92,245,.20)');
+  grd.addColorStop(.5,'rgba(79,142,247,.08)');
+  grd.addColorStop(1,'rgba(79,142,247,0)');
   ctx.beginPath(); ctx.arc(x,y,100,0,Math.PI*2);
-  ctx.fillStyle = grd; ctx.fill();
-
-  // Dashed rotating rings
-  const rings = [
-    {r:52, sp:.00025, clr:'rgba(124,92,245,.35)', lw:1.5, dash:[5,10]},
-    {r:38, sp:.00040, clr:'rgba(79,142,247,.22)',  lw:1,   dash:[3,8]},
-    {r:25, sp:.00060, clr:'rgba(124,92,245,.20)',  lw:.8,  dash:[2,6]},
+  ctx.fillStyle=grd; ctx.fill();
+  // Rotating rings
+  const rings=[
+    {r:52,sp:.00025,clr:'rgba(124,92,245,.38)',lw:1.5,dash:[5,10]},
+    {r:38,sp:.00040,clr:'rgba(79,142,247,.24)', lw:1,  dash:[3,8]},
+    {r:24,sp:.00065,clr:'rgba(124,92,245,.20)', lw:.8, dash:[2,6]},
   ];
-  rings.forEach((ring, ri) => {
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(T * ring.sp * (ri%2 ? 1 : -1));
+  rings.forEach((ring,ri)=>{
+    ctx.save(); ctx.translate(x,y);
+    ctx.rotate(T*ring.sp*(ri%2?1:-1));
     ctx.beginPath(); ctx.arc(0,0,ring.r,0,Math.PI*2);
-    ctx.strokeStyle = ring.clr;
-    ctx.lineWidth   = ring.lw;
-    ctx.setLineDash(ring.dash);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-
-    // Small dots on each ring at 3 positions
+    ctx.strokeStyle=ring.clr; ctx.lineWidth=ring.lw;
+    ctx.setLineDash(ring.dash); ctx.stroke(); ctx.setLineDash([]);
+    // Dots on ring
     for(let d=0;d<3;d++){
-      const a  = T * ring.sp * (ri%2 ? 1 : -1) + (d/3)*Math.PI*2;
-      const dx = x + ring.r * Math.cos(a);
-      const dy = y + ring.r * Math.sin(a);
-      ctx.beginPath(); ctx.arc(dx,dy,1.5,0,Math.PI*2);
-      ctx.fillStyle = ring.clr.replace(/[\d.]+\)$/,'0.9)');
-      ctx.fill();
+      const a=T*ring.sp*(ri%2?1:-1)+(d/3)*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(ring.r*Math.cos(a),ring.r*Math.sin(a),1.5,0,Math.PI*2);
+      ctx.fillStyle=ring.clr.replace(/[\d.]+\)$/,'.85)'); ctx.fill();
     }
+    ctx.restore();
   });
-
   // Hex body
-  hex(x, y, 34);
-  ctx.fillStyle   = 'rgba(5,8,16,.96)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(124,92,245,.85)';
-  ctx.lineWidth   = 1.8;
-  ctx.stroke();
-
+  hex(x,y,34);
+  ctx.fillStyle='rgba(5,8,16,.96)'; ctx.fill();
+  ctx.strokeStyle='rgba(124,92,245,.88)'; ctx.lineWidth=1.8;
+  ctx.save(); ctx.shadowColor='rgba(124,92,245,.5)'; ctx.shadowBlur=8;
+  ctx.stroke(); ctx.restore();
   // Inner glow fill
-  hex(x, y, 28);
-  const ig = ctx.createRadialGradient(x,y,0, x,y,28);
-  ig.addColorStop(0, 'rgba(124,92,245,.20)');
-  ig.addColorStop(1, 'rgba(124,92,245,0)');
-  ctx.fillStyle = ig; ctx.fill();
-
+  hex(x,y,28);
+  const ig=ctx.createRadialGradient(x,y,0,x,y,28);
+  ig.addColorStop(0,'rgba(124,92,245,.22)'); ig.addColorStop(1,'rgba(124,92,245,0)');
+  ctx.fillStyle=ig; ctx.fill();
   // Center dot
   ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2);
-  ctx.fillStyle = 'rgba(200,180,255,.95)'; ctx.fill();
-
-  // Label
-  ctx.save();
-  ctx.shadowColor = 'rgba(124,92,245,.6)'; ctx.shadowBlur = 8;
-  ctx.fillStyle = '#c4b5fd';
-  ctx.font = 'bold 10.5px "Courier New"';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('KRONOS', x, y - 3);
-  ctx.restore();
-
-  ctx.fillStyle = 'rgba(124,92,245,.7)';
-  ctx.font = '7.5px "Courier New"';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('PULSE TERMINAL', x, y + 8);
-
-  // Tiny orbital dot (Pulse Terminal 1)
-  const oa = T * .0008;
-  const ox = x + 65 * Math.cos(oa);
-  const oy = y + 65 * Math.sin(oa);
+  ctx.fillStyle='rgba(200,180,255,.95)'; ctx.fill();
+  // Labels
+  ctx.save(); ctx.shadowColor='rgba(124,92,245,.7)'; ctx.shadowBlur=9;
+  ctx.fillStyle='#c4b5fd'; ctx.font='bold 10.5px "Courier New"';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('KRONOS',x,y-4); ctx.restore();
+  ctx.fillStyle='rgba(124,92,245,.65)'; ctx.font='7px "Courier New"';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('PULSE TERMINAL',x,y+8);
+  // Orbital dot
+  const oa=T*.0008;
+  const ox=x+65*Math.cos(oa), oy=y+65*Math.sin(oa);
   ctx.beginPath(); ctx.arc(ox,oy,4,0,Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
-  const ptg = ctx.createRadialGradient(ox,oy,0,ox,oy,10);
-  ptg.addColorStop(0,'rgba(255,255,255,.4)');
-  ptg.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.beginPath(); ctx.arc(ox,oy,10,0,Math.PI*2);
-  ctx.fillStyle = ptg; ctx.fill();
-
-  // "Pulse Terminal 1" label near orbital dot
-  ctx.fillStyle = 'rgba(180,200,240,.45)';
-  ctx.font = '7px "Courier New"';
-  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillText('Pulse Terminal 1', ox + 10, oy);
+  ctx.fillStyle='rgba(255,255,255,.88)'; ctx.fill();
+  const ptg=ctx.createRadialGradient(ox,oy,0,ox,oy,11);
+  ptg.addColorStop(0,'rgba(255,255,255,.38)'); ptg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath(); ctx.arc(ox,oy,11,0,Math.PI*2);
+  ctx.fillStyle=ptg; ctx.fill();
+  ctx.fillStyle='rgba(180,200,240,.38)'; ctx.font='6.5px "Courier New"';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('Pulse Terminal 1',ox+10,oy);
 }
 
-// ── Draw a module node ────────────────────────────────────────────────────────
 function drawNode(m, T){
-  const p    = modXY(m);
-  const pulse = Math.sin(T * .0008 + m.phase) * .5 + .5;
-  const s    = m.size;
-  const r    = rgb(m.col);
-
-  // Outer soft glow
-  const outerR = s + 20 + pulse * 8;
-  const og = ctx.createRadialGradient(p.x,p.y, s*.6, p.x,p.y, outerR);
-  og.addColorStop(0, `rgba(${r},.22)`);
-  og.addColorStop(1, `rgba(${r},0)`);
+  const p=modXY(m);
+  const pulse=Math.sin(T*.0008+m.phase)*.5+.5;
+  const s=m.size;
+  const r=rgb(m.col);
+  // Halted: make RISK node pulse red/yellow
+  let col=m.col;
+  if(m.id==='RISK' && S.halted){ col='#f59e0b'; }
+  const rc=rgb(col);
+  // Flash effect (when trade opens)
+  const flashBoost=m.flash>0?m.flash:0;
+  // Outer glow
+  const outerR=s+20+pulse*8+flashBoost*15;
+  const og=ctx.createRadialGradient(p.x,p.y,s*.5,p.x,p.y,outerR);
+  og.addColorStop(0,`rgba(${rc},.${Math.round((22+flashBoost*40))}`);
+  og.addColorStop(1,`rgba(${rc},0)`);
   ctx.beginPath(); ctx.arc(p.x,p.y,outerR,0,Math.PI*2);
-  ctx.fillStyle = og; ctx.fill();
-
+  ctx.fillStyle=og; ctx.fill();
   // Ghost outer hex
-  hex(p.x, p.y, s + 8);
-  ctx.strokeStyle = `rgba(${r},.10)`;
-  ctx.lineWidth   = .8;
-  ctx.stroke();
-
-  // Dashed second ring
-  hex(p.x, p.y, s + 14);
-  ctx.strokeStyle = `rgba(${r},.06)`;
-  ctx.lineWidth   = .5;
-  ctx.setLineDash([2,6]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Main hex body
-  hex(p.x, p.y, s);
-  ctx.fillStyle   = 'rgba(5,8,16,.93)';
-  ctx.fill();
-  ctx.strokeStyle = `rgba(${r},${.55 + pulse * .35})`;
-  ctx.lineWidth   = 1.5;
-  ctx.save();
-  ctx.shadowColor = `rgba(${r},.5)`; ctx.shadowBlur = 6;
-  ctx.stroke();
-  ctx.restore();
-
-  // Inner filled hex
-  hex(p.x, p.y, s * .55);
-  const ig = ctx.createRadialGradient(p.x,p.y,0, p.x,p.y, s*.55);
-  ig.addColorStop(0, `rgba(${r},.40)`);
-  ig.addColorStop(1, `rgba(${r},.04)`);
-  ctx.fillStyle   = ig; ctx.fill();
-  ctx.strokeStyle = `rgba(${r},.25)`;
-  ctx.lineWidth   = .8;
-  ctx.stroke();
-
+  hex(p.x,p.y,s+8);
+  ctx.strokeStyle=`rgba(${rc},.12)`; ctx.lineWidth=.8; ctx.stroke();
+  // Dashed far ring
+  hex(p.x,p.y,s+16); ctx.strokeStyle=`rgba(${rc},.06)`;
+  ctx.lineWidth=.5; ctx.setLineDash([2,7]); ctx.stroke(); ctx.setLineDash([]);
+  // Main hex
+  hex(p.x,p.y,s);
+  ctx.fillStyle='rgba(5,8,16,.93)'; ctx.fill();
+  const glowA=.55+pulse*.35+flashBoost*.4;
+  ctx.strokeStyle=`rgba(${rc},${Math.min(glowA,1)})`;
+  ctx.lineWidth=1.5;
+  ctx.save(); ctx.shadowColor=`rgba(${rc},.55)`; ctx.shadowBlur=6+flashBoost*8;
+  ctx.stroke(); ctx.restore();
+  // Inner hex fill
+  hex(p.x,p.y,s*.55);
+  const ig=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,s*.55);
+  ig.addColorStop(0,`rgba(${rc},.42)`); ig.addColorStop(1,`rgba(${rc},.04)`);
+  ctx.fillStyle=ig; ctx.fill();
+  ctx.strokeStyle=`rgba(${rc},.28)`; ctx.lineWidth=.8; ctx.stroke();
   // Center dot
-  ctx.save();
-  ctx.shadowColor = `rgba(${r},.9)`; ctx.shadowBlur = 6;
+  ctx.save(); ctx.shadowColor=`rgba(${rc},.9)`; ctx.shadowBlur=5+flashBoost*6;
   ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,Math.PI*2);
-  ctx.fillStyle = `rgba(${r},${.8+pulse*.2})`; ctx.fill();
-  ctx.restore();
-
+  ctx.fillStyle=`rgba(${rc},${.82+pulse*.18})`; ctx.fill(); ctx.restore();
   // Module name
-  ctx.save();
-  ctx.shadowColor = `rgba(${r},.5)`; ctx.shadowBlur = 4;
-  ctx.fillStyle = `rgba(${r},.92)`;
-  ctx.font = `bold 9px "Courier New"`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText(m.id, p.x, p.y + s + 7);
-  ctx.restore();
-
-  // Health dot (top-right corner)
-  const hc = m.health==='ok' ? '#22c55e' : m.health==='warn' ? '#f59e0b' : '#ef4444';
-  ctx.beginPath();
-  ctx.arc(p.x + s*.68, p.y - s*.68, 3.5, 0, Math.PI*2);
-  ctx.fillStyle = hc; ctx.fill();
+  ctx.save(); ctx.shadowColor=`rgba(${rc},.5)`; ctx.shadowBlur=4;
+  ctx.fillStyle=`rgba(${rc},.94)`;
+  ctx.font=`bold 9px "Courier New"`;
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(m.id,p.x,p.y+s+7); ctx.restore();
+  // Sub-label (live data)
+  ctx.fillStyle=`rgba(${rc},.40)`;
+  ctx.font=`7px "Courier New"`;
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(m.sub||'',p.x,p.y+s+19);
+  // Health dot top-right
+  const hc=m.health==='ok'?'#22c55e':m.health==='warn'?'#f59e0b':'#ef4444';
+  ctx.beginPath(); ctx.arc(p.x+s*.7,p.y-s*.7,3.5,0,Math.PI*2);
+  ctx.fillStyle=hc; ctx.fill();
+  // Decay flash
+  if(m.flash>0) m.flash=Math.max(0,m.flash-.02);
 }
 
-// ── Draw small relay node on connection line ──────────────────────────────────
-function drawRelay(m, frac, T){
-  const p  = modXY(m);
-  const gx = GX(), gy = GY();
-  const x  = gx + (p.x - gx) * frac;
-  const y  = gy + (p.y - gy) * frac;
-  const r  = rgb(m.col);
-  const pulse = Math.sin(T * .001 + m.phase + frac * 3) * .5 + .5;
-
-  ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2);
-  ctx.fillStyle = 'rgba(5,8,16,.95)'; ctx.fill();
-  ctx.strokeStyle = `rgba(${r},${.3+pulse*.3})`; ctx.lineWidth = 1; ctx.stroke();
-
-  ctx.beginPath(); ctx.arc(x,y,1.5,0,Math.PI*2);
-  ctx.fillStyle = `rgba(${r},.7)`; ctx.fill();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main loop
-// ─────────────────────────────────────────────────────────────────────────────
-const startT = performance.now();
+// ── Render loop ───────────────────────────────────────────────────────────────
+const T0 = performance.now();
 
 function frame(now){
-  const T = now - startT;
-
+  const T = now - T0;
   ctx.clearRect(0,0,C.width,C.height);
-
-  // Background
-  ctx.fillStyle = '#030508';
-  ctx.fillRect(0,0,C.width,C.height);
-
-  // Optional subtle vignette
-  const vig = ctx.createRadialGradient(GX(),GY(),C.height*.2, GX(),GY(),C.height*.7);
-  vig.addColorStop(0,'rgba(0,0,0,0)');
-  vig.addColorStop(1,'rgba(0,0,0,.55)');
-  ctx.fillStyle = vig;
-  ctx.fillRect(0,0,C.width,C.height);
-
+  ctx.fillStyle='#030508'; ctx.fillRect(0,0,C.width,C.height);
+  // Vignette
+  const vig=ctx.createRadialGradient(GX(),GY(),C.height*.22,GX(),GY(),C.height*.72);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,.52)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,C.width,C.height);
   drawGrid();
-
-  // Lines
-  MODS.forEach(m => drawLine(m));
-
-  // Relay nodes (midpoints)
-  MODS.forEach(m => drawRelay(m, .45, T));
-
-  // Pulse dots
-  pulses.forEach(p => drawPulse(p, T));
-
-  // Hub (above lines)
+  MODS.forEach(m=>drawLine(m));
+  MODS.forEach(m=>drawRelay(m,.45,T));
+  PULSES.forEach(p=>drawPulse(p,T));
   drawHub(T);
-
-  // Module nodes (topmost)
-  MODS.forEach(m => drawNode(m, T));
-
+  MODS.forEach(m=>drawNode(m,T));
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Simulated live data
-// ─────────────────────────────────────────────────────────────────────────────
-let simVal   = 10000;
-let startMs  = Date.now();
-const sigPool = [
-  'BTC: BUY 0.71','ETH: SELL 0.43','SOL: BUY 0.61',
-  'DOGE: FLAT 0.18','AVAX: BUY 0.55','BTC: FLAT 0.22'
-];
-const tradePool = [
-  'LONG BTC $1,800','LONG SOL $1,600','LONG AVAX $1,750',
-  'SHORT ETH $1,900','waiting…'
-];
+// ── Header update ─────────────────────────────────────────────────────────────
+function updateHeader(){
+  // Value
+  const retPct  = S.retPct  || 0;
+  const dayPct  = S.dayPct  || 0;
+  const realized= S.realized|| 0;
 
-setInterval(()=>{
-  simVal += (Math.random()-.47) * 18;
-  const el = document.getElementById('sv');
-  el.textContent = '$' + simVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  el.className   = 'sv ' + (simVal >= 10000 ? 'g' : 'r');
+  const svEl = document.getElementById('sv');
+  svEl.textContent  = fmt$(S.value);
+  svEl.className    = 'sv '+(S.value >= S.initial ? 'g' : 'r');
+  document.getElementById('sv-sub').textContent = fmtPct(retPct)+' total';
 
-  document.getElementById('sp').textContent = Math.floor(Math.random()*3);
-  document.getElementById('ss').textContent = sigPool[Math.floor(Math.random()*sigPool.length)];
+  const sdEl = document.getElementById('sd');
+  sdEl.textContent = fmtPct(dayPct);
+  sdEl.className   = 'sv '+(dayPct>=0?'g':'r');
 
-  // Cycle module events
-  MODS.forEach(m => {
-    m.evtIdx = (m.evtIdx + 1) % m.events.length;
+  const srlEl = document.getElementById('srl');
+  srlEl.textContent = fmt$(realized);
+  srlEl.className   = 'sv '+(realized>=0?'g':'r');
+  document.getElementById('srl-sub').textContent = (S.trades||0)+' trades';
+
+  const swrEl = document.getElementById('swr');
+  const wr    = S.winRate||0;
+  swrEl.textContent = wr.toFixed(1)+'%';
+  swrEl.className   = 'sv '+(wr>=50?'g':wr>=40?'y':'r');
+  document.getElementById('swr-sub').textContent = 'PF '+(S.pf||0).toFixed(2);
+
+  const sposEl = document.getElementById('spos');
+  sposEl.textContent = (S.openCount||0)+'/3';
+  sposEl.className   = 'sv '+(S.openCount>0?'y':'');
+  document.getElementById('spos-sub').textContent = fmt$(S.cash||0)+' free';
+
+  // Uptime — always ticking
+}
+
+function updatePrices(prices, prev){
+  const COINS = ['BTC','ETH','SOL','DOGE','AVAX'];
+  COINS.forEach(sym=>{
+    const el = document.getElementById('pi-'+sym);
+    if(!el) return;
+    const p = prices[sym];
+    if(!p) return;
+    const pp = prev[sym] || p;
+    const chg = ((p - pp) / pp * 100);
+    el.querySelector('.pi-price').textContent = fmtPrice(p);
+    const chgEl = el.querySelector('.pi-chg');
+    chgEl.textContent = (chg>=0?'▲':'▼')+Math.abs(chg).toFixed(3)+'%';
+    chgEl.className   = 'pi-chg '+(chg>=0?'up':'dn');
   });
+}
 
-  // Update event log
-  document.getElementById('el-sig').innerHTML   = `<span>SCANNER</span> ${sigPool[Math.floor(Math.random()*sigPool.length)]}`;
-  document.getElementById('el-trade').innerHTML = `<span>EXECUTION</span> ${tradePool[Math.floor(Math.random()*tradePool.length)]}`;
-  document.getElementById('el-risk').innerHTML  = `<span>RISK</span> ${Math.random()>.2 ? 'signal approved' : 'positions ' + Math.floor(Math.random()*3) + '/3'}`;
-}, 3200);
+function updateNodeData(){
+  // DATA node
+  const btcP = S.prices['BTC'];
+  MODS[0].sub = btcP ? 'BTC '+fmtPrice(btcP) : 'connecting…';
 
-// Uptime counter
+  // BRAIN node — avg accuracy
+  const mlVals = Object.values(S.mlSummary);
+  if(mlVals.length){
+    const avg = mlVals.reduce((a,v)=>a+(v.accuracy||0),0)/mlVals.length;
+    MODS[1].sub = 'avg acc '+Math.round(avg*100)+'%';
+  }
+
+  // SCANNER node — top signal
+  const sigs = Object.entries(S.signals);
+  if(sigs.length){
+    const top = sigs.sort((a,b)=>b[1].strength-a[1].strength)[0];
+    MODS[2].sub = top[0]+':'+top[1].direction.slice(0,1).toUpperCase()+' '+top[1].strength.toFixed(2);
+  }
+
+  // RISK node
+  MODS[3].sub = S.halted ? '⚠ HALTED' : 'circuit ok';
+  MODS[3].health = S.halted ? 'warn' : 'ok';
+
+  // EXECUTION node
+  const openPnl = S.positions.reduce((a,p)=>a+(p.pnl||0),0);
+  MODS[4].sub = S.openCount > 0
+    ? (openPnl>=0?'+':'')+fmt$(openPnl)+' open'
+    : 'no positions';
+
+  // PORTFOLIO node
+  MODS[5].sub = fmt$(S.value);
+
+  // WATCHDOG node
+  MODS[6].sub = 'loop '+(S.loopCount||0).toLocaleString();
+
+  // ALERTS node
+  MODS[7].sub = (S.trades||0)+' trades alerted';
+}
+
+function updateNodeHealth(kronosMods){
+  if(!kronosMods||!kronosMods.length) return;
+  kronosMods.forEach(mod=>{
+    const m=MODS.find(x=>x.id===mod.name);
+    if(m){
+      m.health=mod.health||'ok';
+      if(mod.last_event && mod.last_event!=='—'){
+        // Store event for tooltip
+        m.liveEvent=mod.last_event;
+      }
+    }
+  });
+}
+
+// ── Uptime ticker ─────────────────────────────────────────────────────────────
+const vizStart = Date.now();
 setInterval(()=>{
-  const s = Math.floor((Date.now()-startMs)/1000);
-  const h = String(Math.floor(s/3600)).padStart(2,'0');
-  const m = String(Math.floor(s%3600/60)).padStart(2,'0');
-  const sc= String(s%60).padStart(2,'0');
-  document.getElementById('su').textContent = `${h}:${m}:${sc}`;
-},1000);
+  const secs = S.connected ? S.uptime : Math.floor((Date.now()-vizStart)/1000);
+  const h=String(Math.floor(secs/3600)).padStart(2,'0');
+  const m=String(Math.floor(secs%3600/60)).padStart(2,'0');
+  const s=String(secs%60).padStart(2,'0');
+  document.getElementById('sut').textContent=`${h}:${m}:${s}`;
+  if(!S.connected){ S.uptime++; }
+}, 1000);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Hover tooltip
-// ─────────────────────────────────────────────────────────────────────────────
+// ── WebSocket connection ───────────────────────────────────────────────────────
+let ws=null, reconnTimeout=null, reconnDelay=2000;
+
+function setConnStatus(mode, lbl){
+  S.mode=mode;
+  S.connected=(mode==='live');
+  const dot=document.getElementById('conn-dot');
+  const txt=document.getElementById('conn-lbl');
+  dot.className='dot '+mode;
+  txt.textContent=lbl||mode.toUpperCase();
+  txt.style.color=mode==='live'?'#22c55e':mode==='conn'?'#4488ff':'#f59e0b';
+}
+
+function connect(){
+  if(ws){ try{ws.close()}catch(e){} }
+  clearTimeout(reconnTimeout);
+  const host = CFG.host.replace(/^https?:\/\//,'');
+  const proto= location.protocol==='https:'?'wss':'ws';
+  const url  = `${proto}://${host}/ws?token=${encodeURIComponent(CFG.user+':'+CFG.pass)}`;
+  setConnStatus('conn','CONNECTING');
+  try{
+    ws=new WebSocket(url);
+    ws.onopen=()=>{
+      reconnDelay=2000;
+      setConnStatus('live','LIVE');
+      document.getElementById('cfg-status').textContent='Connected ✓';
+      document.getElementById('cfg-status').style.color='#22c55e';
+    };
+    ws.onmessage=ev=>{
+      try{
+        const d=JSON.parse(ev.data);
+        if(d.type==='update') handleLiveData(d);
+      }catch(e){}
+    };
+    ws.onerror=()=>{};
+    ws.onclose=()=>{
+      setConnStatus('demo','DEMO');
+      document.getElementById('cfg-status').textContent='Disconnected — retrying…';
+      document.getElementById('cfg-status').style.color='#f59e0b';
+      reconnTimeout=setTimeout(()=>connect(), reconnDelay);
+      reconnDelay=Math.min(reconnDelay*1.5, 30000);
+    };
+  }catch(e){
+    setConnStatus('demo','DEMO');
+    reconnTimeout=setTimeout(()=>connect(), reconnDelay);
+    reconnDelay=Math.min(reconnDelay*1.5, 30000);
+  }
+}
+
+function handleLiveData(d){
+  const p=d.portfolio||{};
+  S.prevPrices = {...S.prices};
+  S.prices     = d.prices    || {};
+  S.signals    = d.signals   || {};
+  S.mlSummary  = d.ml_summary|| {};
+  S.positions  = d.positions || [];
+  S.uptime     = d.uptime    || 0;
+  S.loopCount  = d.loop_count|| 0;
+
+  S.value    = p.value    || S.value;
+  S.initial  = p.initial  || S.initial;
+  S.cash     = p.cash     || 0;
+  S.realized = p.realized || 0;
+  S.fees     = p.fees     || 0;
+  S.retPct   = p.ret_pct  || 0;
+  S.dayPct   = p.day_pct  || 0;
+  S.winRate  = p.win_rate || 0;
+  S.trades   = p.trades   || 0;
+  S.pf       = p.profit_factor||0;
+  S.openCount= p.open_count||0;
+  S.halted   = p.halted   || false;
+
+  if(d.kronos){
+    S.kronosMods=d.kronos.modules||[];
+    S.busEvents =(d.kronos.bus||{}).total_events||0;
+    updateNodeHealth(S.kronosMods);
+  }
+
+  // Detect new trade open → flash EXECUTION
+  const prevOpen=MODS[4]._prevOpen||0;
+  if(S.openCount > prevOpen){ MODS[4].flash=1; }
+  MODS[4]._prevOpen=S.openCount;
+
+  updateHeader();
+  updatePrices(S.prices, S.prevPrices);
+  updateNodeData();
+  updateEventLog(d);
+
+  // Timestamp
+  document.getElementById('ts-lbl').textContent=
+    new Date(d.ts*1000).toLocaleTimeString();
+}
+
+function updateEventLog(d){
+  const p=d.prices||{};
+  const sigs=d.signals||{};
+  const top=Object.entries(sigs).sort((a,b)=>b[1].strength-a[1].strength)[0];
+  document.getElementById('el-d').textContent=
+    p.BTC ? 'BTC '+fmtPrice(p.BTC) : 'prices.update × 5s';
+  document.getElementById('el-s').textContent=
+    top ? top[0]+':'+top[1].direction.toUpperCase()+' '+top[1].strength.toFixed(2) : 'scanning…';
+  const pos=d.positions||[];
+  document.getElementById('el-e').textContent=
+    pos.length ? pos.map(p=>p.coin+' '+p.side.toUpperCase()).join(', ') : 'no open positions';
+  document.getElementById('el-r').textContent=
+    (d.portfolio||{}).halted ? '⚠ HALTED' : 'circuit ok';
+}
+
+// ── Config panel ──────────────────────────────────────────────────────────────
+let cfgOpen=false;
+function toggleCfg(){
+  cfgOpen=!cfgOpen;
+  document.getElementById('cfg').classList.toggle('show',cfgOpen);
+}
+function cfgConnect(){
+  const url  = document.getElementById('cfg-url').value.trim();
+  const user = document.getElementById('cfg-user').value.trim();
+  const pass = document.getElementById('cfg-pass').value.trim();
+  const host = url.replace(/^https?:\/\//,'');
+  CFG.host=host; CFG.user=user; CFG.pass=pass;
+  document.getElementById('cfg-status').textContent='Connecting…';
+  document.getElementById('cfg-status').style.color='#4488ff';
+  connect();
+}
+
+// ── Hover tooltip ─────────────────────────────────────────────────────────────
 const tt = document.getElementById('tt');
-
-C.addEventListener('mousemove', e=>{
-  const rect = C.getBoundingClientRect();
-  const mx   = e.clientX - rect.left;
-  const my   = e.clientY - rect.top;
-
-  let hit = null;
-  MODS.forEach(m=>{
-    const p  = modXY(m);
-    const dx = mx - p.x, dy = my - p.y;
-    if(dx*dx + dy*dy < (m.size+14)**2) hit = m;
-  });
-
+C.addEventListener('mousemove',e=>{
+  const rect=C.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  let hit=null;
+  MODS.forEach(m=>{ const p=modXY(m); const dx=mx-p.x,dy=my-p.y; if(dx*dx+dy*dy<(m.size+14)**2) hit=m; });
   if(hit){
-    const evt = hit.events[hit.evtIdx];
-    document.getElementById('tt-name').textContent   = hit.id;
-    document.getElementById('tt-name').style.color   = hit.col;
-    document.getElementById('tt-health').innerHTML   = `<span style="color:${hit.health==='ok'?'#22c55e':'#f59e0b'}">● ${hit.health.toUpperCase()}</span>  RUNNING`;
-    document.getElementById('tt-event').textContent  = evt;
-    tt.style.left = (e.clientX + 18) + 'px';
-    tt.style.top  = (e.clientY - 14) + 'px';
+    document.getElementById('tt-name').textContent=hit.id;
+    document.getElementById('tt-name').style.color=hit.col;
+    const hc=hit.health==='ok'?'#22c55e':hit.health==='warn'?'#f59e0b':'#ef4444';
+    document.getElementById('tt-health').innerHTML=
+      `<span style="color:${hc}">● ${hit.health.toUpperCase()}</span>  RUNNING`;
+    // Build rows based on module
+    const rows=getTtRows(hit);
+    document.getElementById('tt-rows').innerHTML=rows.map(r=>
+      `<div class="tt-row"><span class="lbl">${r.l}</span><span class="val ${r.c||''}">${r.v}</span></div>`
+    ).join('');
+    tt.style.left=(e.clientX+18)+'px';
+    tt.style.top =(e.clientY-14)+'px';
     tt.classList.add('show');
   } else {
     tt.classList.remove('show');
   }
 });
+C.addEventListener('mouseleave',()=>tt.classList.remove('show'));
 
-C.addEventListener('mouseleave', ()=> tt.classList.remove('show'));
-
-// Try to connect to real KRONOS backend if running locally
-(async()=>{
-  try{
-    const r = await fetch('/api/kronos', {signal: AbortSignal.timeout(1500)});
-    if(r.ok){
-      const d = await r.json();
-      if(d.modules){
-        d.modules.forEach(mod=>{
-          const m = MODS.find(x=>x.id===mod.name);
-          if(m){
-            m.health = mod.health;
-            m.events = [mod.last_event, ...m.events].slice(0,3);
-          }
-        });
-        if(d.system){
-          const s = d.system;
-          if(s.value)   simVal = s.value;
-          if(s.trades)  document.getElementById('sp').textContent = s.trades;
-        }
+function getTtRows(m){
+  switch(m.id){
+    case 'DATA':
+      return [
+        {l:'BTC',  v:fmtPrice(S.prices.BTC)},
+        {l:'ETH',  v:fmtPrice(S.prices.ETH)},
+        {l:'SOL',  v:fmtPrice(S.prices.SOL)},
+        {l:'Mode', v:S.connected?'LIVE':'DEMO', c:S.connected?'g':''},
+        {l:'Event',v:m.liveEvent||m.events[m.evtIdx]},
+      ];
+    case 'BRAIN':
+      return Object.entries(S.mlSummary).map(([c,v])=>
+        ({l:c, v:v.trained?(v.accuracy*100).toFixed(1)+'%':'pending', c:v.accuracy>=.55?'g':''})
+      ).concat([{l:'Event',v:m.liveEvent||m.events[m.evtIdx]}]);
+    case 'SCANNER':
+      return Object.entries(S.signals).map(([c,s])=>
+        ({l:c, v:s.direction.toUpperCase()+' '+s.strength.toFixed(2), c:s.direction==='buy'?'g':s.direction==='sell'?'r':''})
+      ).concat([{l:'Event',v:m.liveEvent||m.events[m.evtIdx]}]);
+    case 'RISK':
+      return [
+        {l:'Status',   v:S.halted?'HALTED':'ok', c:S.halted?'r':'g'},
+        {l:'Positions',v:(S.openCount||0)+'/3'},
+        {l:'Event',    v:m.liveEvent||m.events[m.evtIdx]},
+      ];
+    case 'EXECUTION':
+      if(S.positions.length){
+        return S.positions.map(p=>({
+          l:p.coin+' '+p.side.toUpperCase(),
+          v:(p.pnl>=0?'+':'')+fmt$(p.pnl)+' ('+p.pnl_pct.toFixed(2)+'%)',
+          c:p.pnl>=0?'g':'r'
+        })).concat([{l:'Event',v:m.liveEvent||m.events[m.evtIdx]}]);
       }
-    }
-  } catch(e){}
-})();
+      return [{l:'Status',v:'No open positions'},{l:'Event',v:m.liveEvent||m.events[m.evtIdx]}];
+    case 'PORTFOLIO':
+      return [
+        {l:'Value',    v:fmt$(S.value),      c:S.value>=S.initial?'g':'r'},
+        {l:'Realized', v:fmt$(S.realized),   c:S.realized>=0?'g':'r'},
+        {l:'Fees',     v:fmt$(S.fees)},
+        {l:'Win Rate', v:(S.winRate||0).toFixed(1)+'%', c:S.winRate>=50?'g':'r'},
+        {l:'Trades',   v:S.trades||0},
+      ];
+    case 'WATCHDOG':
+      return [
+        {l:'Uptime',   v:document.getElementById('sut').textContent},
+        {l:'Loop',     v:'#'+(S.loopCount||0).toLocaleString()},
+        {l:'Bus events',v:(S.busEvents||0).toLocaleString()},
+        {l:'Event',    v:m.liveEvent||m.events[m.evtIdx]},
+      ];
+    case 'ALERTS':
+      return [
+        {l:'Trades alerted',v:S.trades||0},
+        {l:'Mode',           v:S.connected?'Discord live':'offline'},
+        {l:'Event',          v:m.liveEvent||m.events[m.evtIdx]},
+      ];
+    default:
+      return [{l:'Event',v:m.liveEvent||m.events[m.evtIdx]}];
+  }
+}
+
+// ── Demo simulation (runs when not connected) ─────────────────────────────────
+const demoStart=Date.now();
+let demoVal=10000, demoTrades=0, demoWins=0;
+const demoPrices={BTC:104240,ETH:3210,SOL:182,DOGE:.1248,AVAX:38.4};
+const demoSigs={BTC:{direction:'flat',strength:.22},ETH:{direction:'buy',strength:.71},
+  SOL:{direction:'sell',strength:.43},DOGE:{direction:'flat',strength:.12},AVAX:{direction:'buy',strength:.55}};
+const demoML={BTC:{accuracy:.721,trained:true},ETH:{accuracy:.684,trained:true},
+  SOL:{accuracy:.655,trained:true},DOGE:{accuracy:.612,trained:true},AVAX:{accuracy:.690,trained:true}};
+
+setInterval(()=>{
+  if(S.connected) return;
+  // Simulate realistic price movements
+  ['BTC','ETH','SOL','DOGE','AVAX'].forEach(c=>{
+    S.prevPrices[c]=S.prices[c]||demoPrices[c];
+    demoPrices[c]*=(1+(Math.random()-.499)*.0006);
+    S.prices[c]=demoPrices[c];
+  });
+  demoVal+=(Math.random()-.47)*20;
+  S.value   =demoVal;
+  S.initial =10000;
+  S.cash    =demoVal*.82;
+  S.realized=demoVal-10000;
+  S.retPct  =(demoVal-10000)/10000*100;
+  S.dayPct  =S.retPct*.3+Math.random()*.2-.05;
+  S.winRate =55+Math.random()*15;
+  S.trades  =Math.floor((Date.now()-demoStart)/18000);
+  S.pf      =1.2+Math.random()*.8;
+  S.openCount=Math.floor(Math.random()<.3?1:0);
+  S.halted  =false;
+  S.signals =demoSigs;
+  S.mlSummary=demoML;
+  S.positions=S.openCount?[{coin:'BTC',side:'long',pnl:Math.random()*200-40,pnl_pct:Math.random()*2-.4}]:[];
+  S.uptime  =Math.floor((Date.now()-demoStart)/1000);
+  S.loopCount=Math.floor(S.uptime/30);
+  updateHeader();
+  updatePrices(S.prices,S.prevPrices);
+  updateNodeData();
+  // Cycle events
+  MODS.forEach(m=>{ m.evtIdx=(m.evtIdx+1)%m.events.length; });
+  document.getElementById('el-d').textContent='BTC '+fmtPrice(S.prices.BTC);
+  const topSig=Object.entries(S.signals).sort((a,b)=>b[1].strength-a[1].strength)[0];
+  document.getElementById('el-s').textContent=topSig?topSig[0]+':'+topSig[1].direction.toUpperCase()+' '+topSig[1].strength.toFixed(2):'scanning…';
+  document.getElementById('el-e').textContent=S.openCount?'LONG BTC (demo)':'no open positions';
+  document.getElementById('el-r').textContent='circuit ok';
+}, 3000);
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+// Initial demo render
+updateHeader();
+updatePrices(demoPrices,demoPrices);
+MODS.forEach(m=>{ m.sub=m.events[0]; });
+
+// Try to auto-connect
+connect();
 </script>
 </body>
 </html>
